@@ -18,8 +18,6 @@
       --ios-bg: #F2F2F7;
       --ios-card: #FFFFFF;
       --ios-blue: #007AFF;
-      --ios-green: #34C759;
-      --ios-red: #FF3B30;
     }
     * {
       -webkit-tap-highlight-color: transparent;
@@ -61,7 +59,7 @@
       to { transform: translateY(0); opacity: 1; }
     }
     .animate-sheet {
-      animation: slideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: slideUp 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
   </style>
 </head>
@@ -71,7 +69,10 @@
   <header class="sticky top-0 z-30 glass-header border-b border-gray-200/80 safe-top px-4 pb-3">
     <div class="max-w-lg mx-auto flex items-center justify-between">
       <div>
-        <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Reports</p>
+        <div class="flex items-center gap-2">
+          <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Ledger</p>
+          <span id="cloudStatusBadge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Synced</span>
+        </div>
         <h1 id="headerTitle" class="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
       </div>
       <div id="headerActionArea"></div>
@@ -107,19 +108,32 @@
 
   <!-- Universal Modal Container -->
   <div id="modalBackdrop" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div id="modalContent" class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 max-h-[90vh] overflow-y-auto safe-bottom animate-sheet shadow-2xl">
+    <div id="modalContent" class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 max-h-[92vh] overflow-y-auto safe-bottom animate-sheet shadow-2xl">
       <!-- Dynamic Modal Inner Content -->
     </div>
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-opacity"></div>
+  <div id="toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-opacity text-center max-w-[90vw]"></div>
 
   <script>
     /*****************************************************************
-     * 1. SAFE SVG ICONS & CURRENCY HELPERS (NO ENCODING CORRUPTION)
+     * 1. SAFE UNICODE SYMBOLS & SVG ICONS
      *****************************************************************/
-    const RS = '\u20B9'; // Safe Unicode Rupee Symbol
+    const RS = '\u20B9';
+    const EMOJI = {
+      car: '\uD83D\uDE99',
+      user: '\uD83D\uDC64',
+      cal: '\uD83D\uDCC5',
+      clock: '\u23F0',
+      pin: '\uD83D\uDCCD',
+      seat: '\uD83E\uDE91',
+      phone: '\uD83D\uDCDE',
+      sedan: '\uD83D\uDE98',
+      point: '\uD83D\uDC49',
+      pray: '\uD83D\uDE4F',
+      smile: '\uD83D\uDE0A'
+    };
 
     const ICONS = {
       trash: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
@@ -129,7 +143,11 @@
       pin: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
       send: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>',
       arrowRight: '<svg class="w-3 h-3 inline mx-0.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>',
-      check: '<svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
+      swap: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>',
+      edit: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+      check: '<svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
+      chevron: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>',
+      cloud: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>'
     };
 
     function formatCurrency(num) {
@@ -137,36 +155,37 @@
     }
 
     /*****************************************************************
-     * 2. STATE MANAGEMENT & LOCAL STORAGE
+     * 2. STATE MANAGEMENT, LOCAL STORAGE & GOOGLE SHEET AUTO-SYNC
      *****************************************************************/
-    const STORAGE_KEY = 'carpool_pro_v2';
+    const STORAGE_KEY = 'carpool_pro_v3';
     const todayStr = () => new Date().toISOString().slice(0, 10);
 
     const defaultState = {
       riders: [
-        { id: 'r1', name: 'Rahul Sharma', phone: '919876543210', pickup: 'LB Nagar Metro', drop: 'Hitec City', defaultFare: 150 },
-        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', pickup: 'Turkayamjal', drop: 'Gachibowli', defaultFare: 180 },
-        { id: 'r3', name: 'Suresh Verma', phone: '919876543212', pickup: 'Nagole X Roads', drop: 'Mindspace', defaultFare: 120 },
-        { id: 'r4', name: 'Ananya Rao', phone: '919876543213', pickup: 'Uppal Ring Road', drop: 'Financial District', defaultFare: 160 }
+        { id: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Turkayamjal', drop: 'Tech Mahindra', defaultFare: 150, shift: '09:00 AM - 06:00 PM', notes: 'Main Gate Pickup' },
+        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'LB Nagar Metro', drop: 'Gachibowli', defaultFare: 180, shift: '09:30 AM - 06:30 PM', notes: '' },
+        { id: 'r3', name: 'Suresh Verma', phone: '919876543212', company: 'TCS', pickup: 'Nagole X Roads', drop: 'Hitec City', defaultFare: 120, shift: '08:30 AM - 05:30 PM', notes: 'Pays every Friday' }
       ],
       routes: [
-        { id: 'rt1', name: 'Office Ride (Morning)', defaultTime: '08:30', capacity: 4 },
-        { id: 'rt2', name: 'Home Ride (Evening)', defaultTime: '18:30', capacity: 4 },
-        { id: 'rt3', name: 'Airport Drop', defaultTime: '06:00', capacity: 3 }
+        { id: 'rt1', name: 'Office Ride (Morning)', fromPoint: 'Turkayamjal', toPoint: 'Tech Mahindra', defaultTime: '08:30', capacity: 4, defaultToll: 60, isReturn: false },
+        { id: 'rt2', name: 'Return Ride (Evening)', fromPoint: 'Tech Mahindra', toPoint: 'Turkayamjal', defaultTime: '15:20', capacity: 4, defaultToll: 60, isReturn: true }
       ],
       rides: [
         {
           id: 'ride_demo_1',
-          routeId: 'rt1',
-          routeName: 'Office Ride (Morning)',
+          routeId: 'rt2',
+          routeName: 'Return Ride (Evening)',
+          fromPoint: 'Tech Mahindra',
+          toPoint: 'Turkayamjal',
           date: todayStr(),
-          time: '08:30',
+          time: '15:20',
+          capacity: 4,
+          tollCost: 60,
           status: 'scheduled',
           liveMapLink: '',
           passengers: [
-            { riderId: 'r1', name: 'Rahul Sharma', phone: '919876543210', pickup: 'LB Nagar Metro', drop: 'Hitec City', fare: 150, paid: false, paidAmount: 0, payMode: 'UPI' },
-            { riderId: 'r2', name: 'Pooja Reddy', phone: '919876543211', pickup: 'Turkayamjal', drop: 'Gachibowli', fare: 180, paid: false, paidAmount: 0, payMode: 'UPI' },
-            { riderId: 'r3', name: 'Suresh Verma', phone: '919876543212', pickup: 'Nagole X Roads', drop: 'Mindspace', fare: 120, paid: false, paidAmount: 0, payMode: 'Cash' }
+            { riderId: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Tech Mahindra', drop: 'Turkayamjal', fare: 150, paid: false, paidAmount: 0, payMode: 'UPI' },
+            { riderId: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'Gachibowli', drop: 'LB Nagar Metro', fare: 180, paid: false, paidAmount: 0, payMode: 'UPI' }
           ]
         }
       ],
@@ -175,11 +194,22 @@
         { id: 'f2', date: '2026-11-09', odometer: 42560, liters: 27.0, totalCost: 2890 }
       ],
       settings: {
-        upiId: 'yourname@okaxis',
+        driverName: 'Raj Reddy',
+        driverPhone: '9959344266',
+        vehicleInfo: 'Tiago (Blue) 6259',
+        adminPhone: '',
+        upiId: 'rajreddy@okaxis',
         groupLink: '',
         msgStart: 'Hi {Name}, my {RideName} has started! On my way toward {Pickup}.',
         msgEnd: 'Thank you for riding with me today on {RideName}, {Name}! Ride fare: Rs.{Amount}. UPI: {UPI}',
-        msgReminder: 'Hi {Name}, gentle reminder for your pending carpool fare of Rs.{Amount} ({RideName} on {Date}). Please UPI to {UPI}. Thank you!'
+        msgReminder: 'Hi {Name}, gentle reminder for your pending carpool fare of Rs.{Amount} ({RideName} on {Date}). Please UPI to {UPI}. Thank you!',
+        msgTimeUpdate: 'Hi {Name}, update on {RideName} ({Date}): Start time has been updated to {Time}. Please be ready at {Pickup}.',
+        msgCancelled: 'Hi {Name}, sorry to inform you that {RideName} scheduled for {Date} at {Time} has been cancelled due to unavoidable reasons.',
+        cloudGmail: '',
+        googleSheetUrl: '',
+        appsScriptUrl: '',
+        syncFrequency: 'realtime',
+        lastSyncedAt: ''
       }
     };
 
@@ -189,30 +219,37 @@
     let ridesFilter = 'upcoming';
     let setupSubTab = 'riders';
 
-    // Tracks sequential single-button sending progress
     let batchQueue = {
       rideId: null,
       mode: 'start',
       index: 0,
-      extraLink: ''
+      extraLink: '',
+      customNote: ''
     };
 
     function loadState() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('carpool_pro_v1');
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('carpool_pro_v2') || localStorage.getItem('carpool_pro_v1');
         if (saved) {
           const parsed = JSON.parse(saved);
-          return { ...defaultState, ...parsed, settings: { ...defaultState.settings, ...(parsed.settings || {}) } };
+          return {
+            ...defaultState,
+            ...parsed,
+            settings: { ...defaultState.settings, ...(parsed.settings || {}) }
+          };
         }
       } catch (e) {
-        console.error('Failed to load state', e);
+        console.error('Load state error', e);
       }
       return JSON.parse(JSON.stringify(defaultState));
     }
 
-    function saveState() {
+    function saveState(skipCloud = false) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderApp();
+      if (!skipCloud) {
+        maybeAutoSyncCloud();
+      }
     }
 
     function showToast(msg) {
@@ -220,16 +257,122 @@
       el.textContent = msg;
       el.classList.remove('hidden');
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2400);
+      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2500);
     }
 
     /*****************************************************************
-     * 3. HELPERS & MESSAGE FORMATTING
+     * 3. GOOGLE SHEET CLOUD SYNC ENGINE
+     *****************************************************************/
+    function maybeAutoSyncCloud() {
+      const url = (state.settings.appsScriptUrl || '').trim();
+      const freq = state.settings.syncFrequency || 'off';
+      if (!url || freq === 'off') return;
+
+      if (freq === 'realtime') {
+        pushToGoogleSheet(true);
+        return;
+      }
+
+      const last = state.settings.lastSyncedAt ? new Date(state.settings.lastSyncedAt).getTime() : 0;
+      const now = Date.now();
+      const diffHours = (now - last) / (1000 * 60 * 60);
+
+      if (freq === 'daily' && diffHours >= 24) {
+        pushToGoogleSheet(true);
+      } else if (freq === 'weekly' && diffHours >= 168) {
+        pushToGoogleSheet(true);
+      }
+    }
+
+    async function pushToGoogleSheet(silent = false) {
+      const url = (state.settings.appsScriptUrl || '').trim();
+      if (!url) {
+        if (!silent) alert('Please paste your Google Apps Script Web App URL in Setup -> Cloud/Data first.');
+        return;
+      }
+
+      const badge = document.getElementById('cloudStatusBadge');
+      if (badge) {
+        badge.textContent = 'Syncing...';
+        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+      }
+
+      try {
+        const payload = {
+          action: 'backup',
+          gmail: state.settings.cloudGmail || '',
+          updatedAt: new Date().toISOString(),
+          data: state
+        };
+
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        state.settings.lastSyncedAt = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+        if (badge) {
+          badge.textContent = 'Synced';
+          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+        }
+        if (!silent) {
+          renderApp();
+          showToast('Synced to Google Sheet!');
+        }
+      } catch (err) {
+        if (badge) {
+          badge.textContent = 'Sync Offline';
+          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700';
+        }
+        if (!silent) showToast('Sync failed (check internet or Script URL)');
+      }
+    }
+
+    async function pullFromGoogleSheet() {
+      const url = (state.settings.appsScriptUrl || '').trim();
+      if (!url) {
+        alert('Please paste your Google Apps Script Web App URL first.');
+        return;
+      }
+      if (!confirm('Restore data from your Google Sheet? This will replace current data on this iPhone with your cloud backup.')) return;
+
+      showToast('Fetching backup from Google Sheet...');
+      try {
+        const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'action=restore');
+        const json = await res.json();
+        if (json && json.data && json.data.riders && json.data.rides) {
+          const keptSettings = { ...state.settings, ...(json.data.settings || {}) };
+          state = { ...json.data, settings: keptSettings };
+          saveState(true);
+          showToast('Restored from Google Sheet!');
+        } else {
+          alert('No valid backup found in your Google Sheet yet. Tap "Sync Now" first to create one.');
+        }
+      } catch (err) {
+        alert('Could not read from Google Sheet. Make sure your Apps Script is deployed with access set to "Anyone".');
+      }
+    }
+
+    /*****************************************************************
+     * 4. DATE, TIME & MESSAGE FORMATTING HELPERS
      *****************************************************************/
     function formatDateDisplay(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+    }
+
+    function formatTime12Hr(time24) {
+      if (!time24) return '';
+      const [hStr, mStr] = time24.split(':');
+      let h = parseInt(hStr, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${String(h).padStart(2, '0')}:${mStr} ${ampm}`;
     }
 
     function isDateInPeriod(dateStr, period) {
@@ -237,6 +380,14 @@
       const now = new Date();
       const target = new Date(dateStr + 'T00:00:00');
       if (period === 'today') return dateStr === todayStr();
+      if (period === 'week') {
+        const startOfWeek = new Date(now);
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        return target >= startOfWeek && target < endOfWeek;
+      }
       if (period === 'month') return target.getFullYear() === now.getFullYear() && target.getMonth() === now.getMonth();
       if (period === 'quarter') {
         return target.getFullYear() === now.getFullYear() && Math.floor(now.getMonth() / 3) === Math.floor(target.getMonth() / 3);
@@ -254,6 +405,7 @@
         '{Drop}': vars.drop || '',
         '{Amount}': vars.amount != null ? vars.amount : '',
         '{Date}': vars.date || '',
+        '{Time}': vars.time || '',
         '{UPI}': state.settings.upiId || '',
         '{LocationLink}': vars.locationLink || ''
       };
@@ -272,7 +424,7 @@
     }
 
     /*****************************************************************
-     * 4. NAVIGATION & HEADER
+     * 5. NAVIGATION & HEADER
      *****************************************************************/
     function switchTab(tab) {
       currentTab = tab;
@@ -294,16 +446,23 @@
       const subEl = document.getElementById('headerSubtitle');
       const actionEl = document.getElementById('headerActionArea');
       const mainEl = document.getElementById('appMain');
+      const badge = document.getElementById('cloudStatusBadge');
+
+      if (state.settings.appsScriptUrl && state.settings.syncFrequency !== 'off') {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
 
       if (currentTab === 'dashboard') {
         subEl.textContent = 'Analytics & Ledger';
         titleEl.textContent = 'Dashboard';
-        actionEl.innerHTML = `<button onclick="openScheduleModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ New Ride</button>`;
+        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ New Ride</button>`;
         mainEl.innerHTML = renderDashboard();
       } else if (currentTab === 'rides') {
         subEl.textContent = 'Schedule & Live Trip';
         titleEl.textContent = 'Rides';
-        actionEl.innerHTML = `<button onclick="openScheduleModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Schedule</button>`;
+        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Schedule</button>`;
         mainEl.innerHTML = renderRides();
       } else if (currentTab === 'fuel') {
         subEl.textContent = 'Odometer & Mileage';
@@ -311,7 +470,7 @@
         actionEl.innerHTML = `<button onclick="openFuelModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Log Fuel</button>`;
         mainEl.innerHTML = renderFuel();
       } else if (currentTab === 'setup') {
-        subEl.textContent = 'Master Databases';
+        subEl.textContent = 'Master DB & Cloud Sync';
         titleEl.textContent = 'Setup';
         actionEl.innerHTML = '';
         mainEl.innerHTML = renderSetup();
@@ -319,7 +478,7 @@
     }
 
     /*****************************************************************
-     * 5. DASHBOARD & REPORTING VIEW
+     * 6. DASHBOARD & DRILL-DOWN REPORTS
      *****************************************************************/
     function setPeriod(p) {
       dashboardPeriod = p;
@@ -333,16 +492,21 @@
       let totalBilled = 0;
       let totalCollected = 0;
       let totalPending = 0;
+      let totalTolls = 0;
       const pendingItems = [];
       const riderStats = {};
       const routeStats = {};
       const dateStats = {};
 
       filteredRides.forEach(ride => {
+        const toll = Number(ride.tollCost) || 0;
+        totalTolls += toll;
+
         if (!routeStats[ride.routeName]) {
-          routeStats[ride.routeName] = { trips: 0, billed: 0, collected: 0 };
+          routeStats[ride.routeName] = { trips: 0, billed: 0, collected: 0, tolls: 0 };
         }
         routeStats[ride.routeName].trips += 1;
+        routeStats[ride.routeName].tolls += toll;
 
         if (!dateStats[ride.date]) {
           dateStats[ride.date] = { trips: 0, billed: 0, collected: 0 };
@@ -364,7 +528,7 @@
           dateStats[ride.date].collected += paidAmt;
 
           if (!riderStats[p.name]) {
-            riderStats[p.name] = { rides: 0, billed: 0, collected: 0, pending: 0, phone: p.phone };
+            riderStats[p.name] = { rides: 0, billed: 0, collected: 0, pending: 0, phone: p.phone, company: p.company || '' };
           }
           riderStats[p.name].rides += 1;
           riderStats[p.name].billed += fare;
@@ -386,10 +550,12 @@
       });
 
       const totalFuelCost = filteredFuel.reduce((sum, f) => sum + (Number(f.totalCost) || 0), 0);
-      const netRecovery = totalCollected - totalFuelCost;
+      const netRecovery = totalCollected - (totalFuelCost + totalTolls);
+      const paidPct = totalBilled > 0 ? Math.min(100, Math.round((totalCollected / totalBilled) * 100)) : 0;
 
       const periods = [
         { id: 'today', label: 'Today' },
+        { id: 'week', label: 'Week' },
         { id: 'month', label: 'Month' },
         { id: 'quarter', label: 'Quarter' },
         { id: 'year', label: 'Year' },
@@ -437,34 +603,43 @@
       const riderReportHtml = riderEntries.length === 0
         ? `<p class="text-xs text-gray-400 text-center py-3">No rider activity in this period.</p>`
         : riderEntries.map(([name, s]) => `
-            <div class="py-2.5 border-b border-gray-100 last:border-0 flex items-center justify-between">
+            <button onclick="openRiderDrilldown('${name.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 rounded-lg px-1 transition">
               <div>
-                <p class="text-sm font-semibold text-gray-900">${name}</p>
-                <p class="text-[11px] text-gray-500">${s.rides} ride${s.rides > 1 ? 's' : ''} &bull; Collected ${formatCurrency(s.collected)}</p>
+                <div class="flex items-center gap-1.5">
+                  <p class="text-sm font-bold text-gray-900">${name}</p>
+                  ${s.company ? `<span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-1.5 py-0.5 rounded">${s.company}</span>` : ''}
+                </div>
+                <p class="text-[11px] text-gray-500 mt-0.5">${s.rides} ride${s.rides > 1 ? 's' : ''} &bull; Paid ${formatCurrency(s.collected)}</p>
               </div>
-              <div class="text-right">
-                <p class="text-sm font-bold text-gray-900">${formatCurrency(s.billed)}</p>
-                <p class="text-[11px] font-semibold ${s.pending > 0 ? 'text-red-500' : 'text-emerald-600'}">
-                  ${s.pending > 0 ? `Due: ${formatCurrency(s.pending)}` : 'Settled'}
-                </p>
+              <div class="flex items-center gap-2">
+                <div class="text-right">
+                  <p class="text-sm font-bold text-gray-900">${formatCurrency(s.billed)}</p>
+                  <p class="text-[11px] font-semibold ${s.pending > 0 ? 'text-red-500' : 'text-emerald-600'}">
+                    ${s.pending > 0 ? `Due: ${formatCurrency(s.pending)}` : 'Settled'}
+                  </p>
+                </div>
+                ${ICONS.chevron}
               </div>
-            </div>
+            </button>
           `).join('');
 
       const routeEntries = Object.entries(routeStats);
       const routeReportHtml = routeEntries.length === 0
         ? `<p class="text-xs text-gray-400 text-center py-3">No routes logged in this period.</p>`
         : routeEntries.map(([rName, s]) => `
-            <div class="py-2.5 border-b border-gray-100 last:border-0 flex items-center justify-between">
+            <button onclick="openRouteDrilldown('${rName.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 rounded-lg px-1 transition">
               <div>
-                <p class="text-sm font-semibold text-gray-900">${rName}</p>
-                <p class="text-[11px] text-gray-500">${s.trips} trip${s.trips > 1 ? 's' : ''}</p>
+                <p class="text-sm font-bold text-gray-900">${rName}</p>
+                <p class="text-[11px] text-gray-500 mt-0.5">${s.trips} trip${s.trips > 1 ? 's' : ''} &bull; Tolls ${formatCurrency(s.tolls)}</p>
               </div>
-              <div class="text-right">
-                <p class="text-sm font-bold text-gray-900">${formatCurrency(s.collected)}</p>
-                <p class="text-[11px] text-gray-400">of ${formatCurrency(s.billed)}</p>
+              <div class="flex items-center gap-2">
+                <div class="text-right">
+                  <p class="text-sm font-bold text-gray-900">${formatCurrency(s.collected)}</p>
+                  <p class="text-[11px] text-gray-400">of ${formatCurrency(s.billed)}</p>
+                </div>
+                ${ICONS.chevron}
               </div>
-            </div>
+            </button>
           `).join('');
 
       const dateEntries = Object.entries(dateStats).sort((a, b) => b[0].localeCompare(a[0]));
@@ -485,30 +660,33 @@
           ${periodPills}
         </div>
 
-        <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl p-4 shadow-sm">
+        <!-- Net Recovery Hero Card -->
+        <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl p-4 shadow-sm space-y-3">
           <div class="flex justify-between items-start">
             <div>
-              <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Net Recovery (Collected - Fuel)</p>
+              <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Net Profit (Paid - Fuel - Tolls)</p>
               <p class="text-3xl font-bold mt-1 ${netRecovery >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(netRecovery)}</p>
             </div>
             <span class="bg-white/10 text-gray-200 text-[11px] font-medium px-2.5 py-1 rounded-full">${filteredRides.length} Rides</span>
           </div>
-          <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-xs">
-            <div>
-              <p class="text-gray-400 text-[10px]">Collected</p>
-              <p class="font-bold text-emerald-400 mt-0.5">${formatCurrency(totalCollected)}</p>
+
+          <!-- Paid vs Due Progress Bar -->
+          <div class="bg-white/5 rounded-2xl p-3 space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-emerald-400 font-bold">Paid: ${formatCurrency(totalCollected)} (${paidPct}%)</span>
+              <span class="text-orange-400 font-bold">Due: ${formatCurrency(totalPending)}</span>
             </div>
-            <div>
-              <p class="text-gray-400 text-[10px]">Pending Dues</p>
-              <p class="font-bold text-orange-400 mt-0.5">${formatCurrency(totalPending)}</p>
+            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-400 rounded-full" style="width: ${paidPct}%"></div>
             </div>
-            <div>
-              <p class="text-gray-400 text-[10px]">Fuel Spent</p>
-              <p class="font-bold text-rose-400 mt-0.5">${formatCurrency(totalFuelCost)}</p>
+            <div class="flex justify-between text-[11px] text-gray-400 pt-0.5">
+              <span>Total Billed: ${formatCurrency(totalBilled)}</span>
+              <span>Fuel: ${formatCurrency(totalFuelCost)} &bull; Tolls: ${formatCurrency(totalTolls)}</span>
             </div>
           </div>
         </div>
 
+        <!-- Pending Dues -->
         <section class="space-y-2">
           <div class="flex items-center justify-between px-1">
             <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Pending Dues (${pendingItems.length})</h2>
@@ -516,21 +694,191 @@
           ${pendingHtml}
         </section>
 
+        <!-- Rider-Wise Drill-Down -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Rider-Wise Report</h2>
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Rider-Wise Report</h2>
+            <span class="text-[10px] text-blue-600 font-semibold">Tap rider for history</span>
+          </div>
           ${riderReportHtml}
         </section>
 
+        <!-- Route-Wise Drill-Down -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Ride / Route-Wise Report</h2>
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Ride / Route-Wise Report</h2>
+            <span class="text-[10px] text-blue-600 font-semibold">Tap route for details</span>
+          </div>
           ${routeReportHtml}
         </section>
 
+        <!-- Date-Wise Breakdown -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
           <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Date-Wise Ledger</h2>
           ${dateReportHtml}
         </section>
       `;
+    }
+
+    function openRiderDrilldown(riderName) {
+      const riderProfile = state.riders.find(r => r.name === riderName);
+      const matchingTrips = [];
+      let totalBilled = 0;
+      let totalPaid = 0;
+
+      state.rides.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach(ride => {
+        ride.passengers.forEach(p => {
+          if (p.name === riderName) {
+            const fare = Number(p.fare) || 0;
+            const paid = p.paid ? (Number(p.paidAmount) || fare) : (Number(p.paidAmount) || 0);
+            totalBilled += fare;
+            totalPaid += paid;
+            matchingTrips.push({
+              rideId: ride.id,
+              date: ride.date,
+              time: ride.time,
+              routeName: ride.routeName,
+              pickup: p.pickup,
+              drop: p.drop,
+              fare,
+              paid,
+              due: Math.max(0, fare - paid),
+              payMode: p.payMode || 'UPI',
+              status: ride.status
+            });
+          }
+        });
+      });
+
+      const totalDue = Math.max(0, totalBilled - totalPaid);
+      const phone = riderProfile ? riderProfile.phone : (matchingTrips[0] ? matchingTrips[0].phone : '');
+
+      const statementLines = matchingTrips.slice(0, 10).map(t =>
+        `- ${formatDateDisplay(t.date)} (${t.routeName}): Rs.${t.fare} [${t.due > 0 ? 'Due Rs.' + t.due : 'Paid'}]`
+      ).join('\n');
+
+      const statementMsg = `Hi ${riderName}, here is your Carpool Summary:\nTotal Rides: ${matchingTrips.length}\nTotal Billed: Rs.${totalBilled}\nTotal Paid: Rs.${totalPaid}\nPending Balance: Rs.${totalDue}\n\nRecent Trips:\n${statementLines}\n\nUPI ID: ${state.settings.upiId}`;
+      const waStatementUrl = buildWhatsAppUrl(phone, statementMsg);
+
+      const tripRows = matchingTrips.map(t => `
+        <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
+          <div>
+            <p class="font-bold text-gray-900">${formatDateDisplay(t.date)} &bull; ${t.routeName}</p>
+            <p class="text-[11px] text-gray-500 mt-0.5">${t.pickup} ${ICONS.arrowRight} ${t.drop}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-gray-900">${formatCurrency(t.fare)}</p>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.due > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}">
+              ${t.due > 0 ? `Due ${formatCurrency(t.due)}` : `Paid (${t.payMode})`}
+            </span>
+          </div>
+        </div>
+      `).join('');
+
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">${riderName}</h3>
+              <p class="text-xs text-gray-500">
+                ${riderProfile && riderProfile.company ? riderProfile.company + ' &bull; ' : ''}
+                ${phone ? '+' + phone : ''}
+              </p>
+              ${riderProfile && riderProfile.notes ? `<p class="text-[11px] text-blue-600 mt-0.5">${riderProfile.notes}</p>` : ''}
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-gray-900 text-white rounded-2xl p-3 text-center">
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Total Rides</p>
+              <p class="text-base font-bold mt-0.5">${matchingTrips.length}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Total Paid</p>
+              <p class="text-base font-bold text-emerald-400 mt-0.5">${formatCurrency(totalPaid)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Pending Due</p>
+              <p class="text-base font-bold ${totalDue > 0 ? 'text-orange-400' : 'text-gray-300'} mt-0.5">${formatCurrency(totalDue)}</p>
+            </div>
+          </div>
+
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-500">All-Time Ride History</p>
+            ${tripRows || '<p class="text-xs text-gray-400">No trips recorded.</p>'}
+          </div>
+
+          <a href="${waStatementUrl}" target="_blank" rel="noopener noreferrer" class="w-full bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-3 rounded-2xl shadow-xs flex items-center justify-center gap-1.5">
+            ${ICONS.send} Send Full Statement on WhatsApp
+          </a>
+        </div>
+      `);
+    }
+
+    function openRouteDrilldown(routeName) {
+      const matchingRides = state.rides
+        .filter(r => r.routeName === routeName)
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      let totalBilled = 0;
+      let totalPaid = 0;
+      let totalTolls = 0;
+      let totalRiders = 0;
+
+      const tripCards = matchingRides.map(r => {
+        const billed = r.passengers.reduce((s, p) => s + (Number(p.fare) || 0), 0);
+        const paid = r.passengers.reduce((s, p) => s + (p.paid ? (Number(p.paidAmount) || Number(p.fare)) : (Number(p.paidAmount) || 0)), 0);
+        const toll = Number(r.tollCost) || 0;
+        totalBilled += billed;
+        totalPaid += paid;
+        totalTolls += toll;
+        totalRiders += r.passengers.length;
+
+        const names = r.passengers.map(p => p.name).join(', ') || 'No riders';
+        return `
+          <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-3 space-y-1 text-xs">
+            <div class="flex justify-between font-bold text-gray-900">
+              <span>${formatDateDisplay(r.date)} (${formatTime12Hr(r.time)})</span>
+              <span>${formatCurrency(paid)} / ${formatCurrency(billed)}</span>
+            </div>
+            <p class="text-[11px] text-gray-500">Riders (${r.passengers.length}): ${names}</p>
+            <p class="text-[10px] text-gray-400">Status: ${r.status.toUpperCase()} &bull; Toll: ${formatCurrency(toll)}</p>
+          </div>
+        `;
+      }).join('');
+
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-gray-900">${routeName}</h3>
+              <p class="text-xs text-gray-500">${matchingRides.length} Total Trips &bull; ${totalRiders} Passenger Seats Filled</p>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 bg-gray-900 text-white rounded-2xl p-3 text-center">
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Collected</p>
+              <p class="text-base font-bold text-emerald-400 mt-0.5">${formatCurrency(totalPaid)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Tolls</p>
+              <p class="text-base font-bold text-rose-400 mt-0.5">${formatCurrency(totalTolls)}</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Net Route</p>
+              <p class="text-base font-bold text-white mt-0.5">${formatCurrency(totalPaid - totalTolls)}</p>
+            </div>
+          </div>
+
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Trip Breakdown</p>
+            ${tripCards}
+          </div>
+        </div>
+      `);
     }
 
     function quickMarkPaid(rideId, riderId) {
@@ -545,7 +893,7 @@
     }
 
     /*****************************************************************
-     * 6. RIDES TAB (SCHEDULING, LIVE TRIP, SINGLE-BUTTON DISPATCH)
+     * 7. RIDES TAB (SCHEDULE, EDIT ANY RIDE, ADMIN POST, UPDATES)
      *****************************************************************/
     function setRidesFilter(f) {
       ridesFilter = f;
@@ -573,14 +921,15 @@
           ${filterBar}
           <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 space-y-2">
             <p class="text-sm font-semibold text-gray-700">No rides found in this view</p>
-            <p class="text-xs text-gray-400">Tap "+ Schedule" at the top right to plan a ride.</p>
+            <p class="text-xs text-gray-400">Tap "+ Schedule" at the top right to schedule a ride or log a past trip.</p>
           </div>
         `;
       }
 
       const cards = list.map(ride => {
         const routeObj = state.routes.find(rt => rt.id === ride.routeId);
-        const capacity = routeObj ? routeObj.capacity : 4;
+        const capacity = ride.capacity || (routeObj ? routeObj.capacity : 4);
+        const seatsLeft = Math.max(0, capacity - ride.passengers.length);
         const totalFare = ride.passengers.reduce((s, p) => s + (Number(p.fare) || 0), 0);
         const totalPaid = ride.passengers.reduce((s, p) => s + (p.paid ? (Number(p.paidAmount) || Number(p.fare)) : (Number(p.paidAmount) || 0)), 0);
 
@@ -594,64 +943,93 @@
           badgeText = 'Completed';
         }
 
-        const passengerRows = ride.passengers.map(p => `
-          <div class="flex items-center justify-between py-1.5 text-xs border-t border-gray-50">
-            <div>
-              <span class="font-semibold text-gray-800">${p.name}</span>
-              <span class="text-gray-400 block text-[11px]">${p.pickup} ${ICONS.arrowRight} ${p.drop}</span>
-            </div>
-            <div class="text-right">
-              <span class="font-bold text-gray-900">${formatCurrency(p.fare)}</span>
-              ${ride.status === 'completed'
-                ? `<span class="block text-[10px] font-semibold ${p.paid && p.paidAmount >= p.fare ? 'text-emerald-600' : 'text-red-500'}">${p.paid && p.paidAmount >= p.fare ? 'Paid' : `Due ${formatCurrency(Math.max(0, p.fare - (p.paidAmount || 0)))}`}</span>`
-                : ''}
-            </div>
-          </div>
-        `).join('');
+        const passengerRows = ride.passengers.length === 0
+          ? `<div class="py-3 text-center text-xs text-gray-400 border-t border-gray-50">No riders added yet &bull; <button onclick="openRideFormModal('${ride.id}')" class="text-blue-600 font-semibold underline">+ Add Riders</button></div>`
+          : ride.passengers.map(p => `
+              <div class="flex items-center justify-between py-1.5 text-xs border-t border-gray-50">
+                <div>
+                  <span class="font-semibold text-gray-800">${p.name}</span>
+                  <span class="text-gray-400 block text-[11px]">${p.pickup} ${ICONS.arrowRight} ${p.drop}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-gray-900">${formatCurrency(p.fare)}</span>
+                  ${ride.status === 'completed'
+                    ? `<span class="block text-[10px] font-semibold ${p.paid && p.paidAmount >= p.fare ? 'text-emerald-600' : 'text-red-500'}">${p.paid && p.paidAmount >= p.fare ? 'Paid' : `Due ${formatCurrency(Math.max(0, p.fare - (p.paidAmount || 0)))}`}</span>`
+                    : ''}
+                </div>
+              </div>
+            `).join('');
 
         let actionButtons = '';
         if (ride.status === 'scheduled') {
           actionButtons = `
-            <button onclick="startRide('${ride.id}')" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-              ${ICONS.play} Start Ride &amp; Notify All
-            </button>
-            <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 active:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-2.5 rounded-xl" title="Repeat Ride">
-              Repeat
-            </button>
-            <button onclick="deleteRide('${ride.id}')" class="bg-red-50 active:bg-red-100 text-red-600 p-2.5 rounded-xl flex items-center justify-center" aria-label="Delete Ride">
-              ${ICONS.trash}
-            </button>
+            <div class="space-y-2 pt-2 border-t border-gray-100">
+              <div class="flex items-center gap-2">
+                <button onclick="startRide('${ride.id}')" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                  ${ICONS.play} Start Ride &amp; Notify
+                </button>
+                <button onclick="openAdminPostModal('${ride.id}')" class="bg-indigo-50 active:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-2.5 rounded-xl">
+                  Admin Post
+                </button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openRideFormModal('${ride.id}')" class="flex-1 bg-gray-100 active:bg-gray-200 text-gray-800 text-[11px] font-semibold py-2 rounded-xl flex items-center justify-center gap-1">
+                  ${ICONS.edit} Edit / Riders
+                </button>
+                <button onclick="openRideUpdatesModal('${ride.id}')" class="flex-1 bg-amber-50 active:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold py-2 rounded-xl">
+                  Time / Cancel Msg
+                </button>
+                <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-[11px] font-semibold px-2.5 py-2 rounded-xl">
+                  Repeat
+                </button>
+                <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete">
+                  ${ICONS.trash}
+                </button>
+              </div>
+            </div>
           `;
         } else if (ride.status === 'active') {
-          // Clean single-row controls during active ride: Live Location & End Ride
           actionButtons = `
-            <button onclick="openLiveLocationModal('${ride.id}')" class="flex-1 bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-              ${ICONS.pin} Live Location
-            </button>
-            <button onclick="endRide('${ride.id}')" class="flex-1 bg-gray-900 active:bg-gray-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-              ${ICONS.stop} End &amp; Settle
-            </button>
+            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+              <button onclick="openLiveLocationModal('${ride.id}')" class="flex-1 bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                ${ICONS.pin} Live Location
+              </button>
+              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-3 py-2.5 rounded-xl">
+                Edit
+              </button>
+              <button onclick="endRide('${ride.id}')" class="flex-1 bg-gray-900 active:bg-gray-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                ${ICONS.stop} End &amp; Settle
+              </button>
+            </div>
           `;
         } else {
           actionButtons = `
-            <button onclick="openSettlementModal('${ride.id}')" class="flex-1 bg-blue-50 active:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1">
-              ${ICONS.check} Payments (${formatCurrency(totalPaid)}/${formatCurrency(totalFare)})
-            </button>
-            <button onclick="initSingleButtonDispatch('${ride.id}', 'end')" class="bg-emerald-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
-              Thank You
-            </button>
-            <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-2 rounded-xl">
-              Repeat
-            </button>
+            <div class="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+              <button onclick="openSettlementModal('${ride.id}')" class="flex-1 bg-blue-50 active:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1">
+                ${ICONS.check} Payments (${formatCurrency(totalPaid)}/${formatCurrency(totalFare)})
+              </button>
+              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-2 rounded-xl">
+                Edit
+              </button>
+              <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-2 rounded-xl">
+                Repeat
+              </button>
+              <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete">
+                ${ICONS.trash}
+              </button>
+            </div>
           `;
         }
 
         return `
-          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
             <div class="flex items-start justify-between">
               <div>
                 <h3 class="font-bold text-base text-gray-900">${ride.routeName}</h3>
-                <p class="text-xs text-gray-500 mt-0.5">${formatDateDisplay(ride.date)} at ${ride.time} &bull; Seats ${ride.passengers.length}/${capacity}</p>
+                <p class="text-xs text-gray-500 mt-0.5">${formatDateDisplay(ride.date)} at ${formatTime12Hr(ride.time)}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                  Seats: ${ride.passengers.length}/${capacity} (${seatsLeft} avail) &bull; Toll: ${formatCurrency(ride.tollCost || 0)}
+                </p>
               </div>
               <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeClass}">${badgeText}</span>
             </div>
@@ -660,9 +1038,7 @@
               ${passengerRows}
             </div>
 
-            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
-              ${actionButtons}
-            </div>
+            ${actionButtons}
           </div>
         `;
       }).join('');
@@ -675,7 +1051,11 @@
       if (!ride) return;
       ride.status = 'active';
       saveState();
-      initSingleButtonDispatch(rideId, 'start');
+      if (ride.passengers.length > 0) {
+        initSingleButtonDispatch(rideId, 'start');
+      } else {
+        showToast('Ride started!');
+      }
     }
 
     function endRide(rideId) {
@@ -698,8 +1078,12 @@
         id: 'ride_' + Date.now(),
         routeId: orig.routeId,
         routeName: orig.routeName,
+        fromPoint: orig.fromPoint || '',
+        toPoint: orig.toPoint || '',
         date: todayStr(),
         time: orig.time,
+        capacity: orig.capacity || 4,
+        tollCost: orig.tollCost || 0,
         status: 'scheduled',
         liveMapLink: '',
         passengers: orig.passengers.map(p => ({
@@ -715,21 +1099,133 @@
     }
 
     function deleteRide(rideId) {
-      if (!confirm('Delete this scheduled ride?')) return;
+      if (!confirm('Delete this ride permanently?')) return;
       state.rides = state.rides.filter(r => r.id !== rideId);
       saveState();
       showToast('Ride deleted');
     }
 
     /*****************************************************************
-     * 7. SINGLE-BUTTON DISPATCH & REAL-TIME LIVE LOCATION WORKFLOWS
+     * 8. WHATSAPP ADMIN SEAT POST, RIDE UPDATES & SINGLE-BUTTON QUEUE
      *****************************************************************/
-    function initSingleButtonDispatch(rideId, mode, extraLink = '') {
+    function openAdminPostModal(rideId) {
+      const ride = state.rides.find(r => r.id === rideId);
+      if (!ride) return;
+      const routeObj = state.routes.find(rt => rt.id === ride.routeId);
+      const capacity = ride.capacity || (routeObj ? routeObj.capacity : 4);
+      const seatsAvail = Math.max(0, capacity - ride.passengers.length);
+
+      const fromLoc = ride.fromPoint || (routeObj ? routeObj.fromPoint : (ride.passengers[0] ? ride.passengers[0].pickup : 'Origin'));
+      const toLoc = ride.toPoint || (routeObj ? routeObj.toPoint : (ride.passengers[0] ? ride.passengers[0].drop : 'Destination'));
+      const rideHeaderTitle = ride.routeName.toUpperCase().includes('RIDE')
+        ? `${ride.routeName.toUpperCase()} AVAILABLE`
+        : `${ride.routeName.toUpperCase()} RIDE AVAILABLE`;
+
+      const postText =
+`${EMOJI.car} ${rideHeaderTitle} ${EMOJI.car}
+
+${EMOJI.user} Name: ${state.settings.driverName || 'Driver'}
+${EMOJI.cal} Date: ${formatDateDisplay(ride.date)}
+${EMOJI.clock} Start Time: ${formatTime12Hr(ride.time)}
+
+${EMOJI.pin} From: ${fromLoc}
+${EMOJI.pin} To: ${toLoc}
+
+${EMOJI.seat} Seats Available: ${seatsAvail}
+
+${EMOJI.phone} Contact: ${state.settings.driverPhone || ''}
+
+${EMOJI.sedan} Vehicle: ${state.settings.vehicleInfo || ''}
+${EMOJI.point} Interested? WhatsApp me directly for booking.
+
+${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
+
+      const waUrl = buildWhatsAppUrl(state.settings.adminPhone || '', postText);
+
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold">WhatsApp Admin Seat Post</h3>
+            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+          </div>
+
+          <textarea id="adminPostTextarea" rows="13" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-mono leading-relaxed">${postText}</textarea>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="copyAdminPostText()" class="bg-gray-100 active:bg-gray-200 text-gray-800 text-xs font-bold py-3 rounded-2xl">
+              Copy Post Text
+            </button>
+            <a id="adminWaLink" href="${waUrl}" target="_blank" rel="noopener noreferrer" onclick="updateAdminWaHref()" class="bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-3 rounded-2xl shadow-xs flex items-center justify-center gap-1.5">
+              ${ICONS.send} Send to Admin
+            </a>
+          </div>
+        </div>
+      `);
+    }
+
+    function updateAdminWaHref() {
+      const txt = document.getElementById('adminPostTextarea').value;
+      document.getElementById('adminWaLink').href = buildWhatsAppUrl(state.settings.adminPhone || '', txt);
+    }
+
+    function copyAdminPostText() {
+      const el = document.getElementById('adminPostTextarea');
+      el.select();
+      navigator.clipboard.writeText(el.value).then(() => showToast('Admin post copied!'));
+    }
+
+    function openRideUpdatesModal(rideId) {
+      const ride = state.rides.find(r => r.id === rideId);
+      if (!ride) return;
+      if (ride.passengers.length === 0) {
+        alert('No riders are added to this ride yet.');
+        return;
+      }
+
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold">Send Ride Update to Riders</h3>
+            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+          </div>
+
+          <button onclick="initSingleButtonDispatch('${ride.id}', 'timeUpdate')" class="w-full text-left bg-blue-50 active:bg-blue-100 border border-blue-200 rounded-2xl p-3.5 space-y-1">
+            <p class="text-sm font-bold text-blue-900">1. Ride Time Updated (${formatTime12Hr(ride.time)})</p>
+            <p class="text-[11px] text-blue-700">Sends your updated start time message to all riders.</p>
+          </button>
+
+          <button onclick="initSingleButtonDispatch('${ride.id}', 'cancelled')" class="w-full text-left bg-red-50 active:bg-red-100 border border-red-200 rounded-2xl p-3.5 space-y-1">
+            <p class="text-sm font-bold text-red-900">2. Ride Cancelled Notice</p>
+            <p class="text-[11px] text-red-700">Notifies all riders that today's ride is cancelled.</p>
+          </button>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2">
+            <p class="text-sm font-bold text-gray-900">3. Custom Quick Note</p>
+            <input type="text" id="customRideNoteInput" placeholder="e.g. Stuck in traffic, running 10 mins late" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            <button onclick="sendCustomNoteToRiders('${ride.id}')" class="w-full bg-gray-900 text-white text-xs font-bold py-2.5 rounded-xl">
+              Send Custom Note to All
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function sendCustomNoteToRiders(rideId) {
+      const note = document.getElementById('customRideNoteInput').value.trim();
+      if (!note) {
+        alert('Please type a message first.');
+        return;
+      }
+      initSingleButtonDispatch(rideId, 'custom', '', note);
+    }
+
+    function initSingleButtonDispatch(rideId, mode, extraLink = '', customNote = '') {
       batchQueue = {
         rideId,
         mode,
         index: 0,
-        extraLink
+        extraLink,
+        customNote
       };
       renderSingleButtonDispatchModal();
     }
@@ -743,36 +1239,36 @@
       const isDone = idx >= total;
       const currentPassenger = isDone ? ride.passengers[total - 1] : ride.passengers[idx];
 
-      let title = 'Notify All Riders (Ride Started)';
-      if (batchQueue.mode === 'end') title = 'Send Thank You to All Riders';
-      if (batchQueue.mode === 'location') title = 'Send Live Location to All Riders';
+      const titles = {
+        start: 'Notify All Riders (Ride Started)',
+        end: 'Send Thank You to All Riders',
+        location: 'Send Live Location to All Riders',
+        timeUpdate: 'Send Time Update to All Riders',
+        cancelled: 'Send Cancellation to All Riders',
+        custom: 'Send Custom Update to All Riders'
+      };
 
       const buildMsgForPassenger = (p) => {
-        if (batchQueue.mode === 'start') {
-          return compileMessage(state.settings.msgStart, {
-            name: p.name,
-            rideName: ride.routeName,
-            pickup: p.pickup,
-            drop: p.drop,
-            amount: p.fare
-          });
-        } else if (batchQueue.mode === 'end') {
-          return compileMessage(state.settings.msgEnd, {
-            name: p.name,
-            rideName: ride.routeName,
-            pickup: p.pickup,
-            drop: p.drop,
-            amount: p.fare
-          });
-        } else {
-          return `Hi ${p.name}, follow my live moving location for ${ride.routeName} here: ${batchQueue.extraLink}`;
-        }
+        const vars = {
+          name: p.name,
+          rideName: ride.routeName,
+          pickup: p.pickup,
+          drop: p.drop,
+          amount: p.fare,
+          date: formatDateDisplay(ride.date),
+          time: formatTime12Hr(ride.time)
+        };
+        if (batchQueue.mode === 'start') return compileMessage(state.settings.msgStart, vars);
+        if (batchQueue.mode === 'end') return compileMessage(state.settings.msgEnd, vars);
+        if (batchQueue.mode === 'timeUpdate') return compileMessage(state.settings.msgTimeUpdate, vars);
+        if (batchQueue.mode === 'cancelled') return compileMessage(state.settings.msgCancelled, vars);
+        if (batchQueue.mode === 'custom') return `Hi ${p.name} (${ride.routeName}): ${batchQueue.customNote}`;
+        return `Hi ${p.name}, follow my live moving location for ${ride.routeName} here: ${batchQueue.extraLink}`;
       };
 
       const previewMsg = buildMsgForPassenger(currentPassenger);
       const waUrl = buildWhatsAppUrl(currentPassenger.phone, previewMsg);
 
-      // Optional 1-tap WhatsApp Group Broadcast if configured
       const groupMsg = buildMsgForPassenger({
         name: 'Everyone',
         pickup: 'your pickup points',
@@ -793,7 +1289,7 @@
       openModal(`
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold">${title}</h3>
+            <h3 class="text-lg font-bold">${titles[batchQueue.mode] || 'Notify Riders'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
@@ -845,22 +1341,15 @@
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-900 space-y-1">
-            <p class="font-bold">Why a single GPS pin doesn't move:</p>
-            <p>iPhone Safari only captures a one-time GPS snapshot. To share a <strong>real-time moving location</strong> with your riders, use either option below:</p>
-          </div>
-
-          <!-- Option 1: Google Maps / Apple Maps Live Trip Link -->
           <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2.5">
-            <p class="text-xs font-bold text-gray-900">Option 1: Share Google / Apple Maps Live Trip Link</p>
-            <p class="text-[11px] text-gray-500">1. Start navigation in Google Maps or Apple Maps &rarr; tap <strong>Share Trip Progress</strong> &rarr; Copy Link.<br>2. Paste the link below to send your moving trip to all riders:</p>
+            <p class="text-xs font-bold text-gray-900">Option 1: Google / Apple Maps Live Trip Link</p>
+            <p class="text-[11px] text-gray-500">1. Start navigation in Google Maps or Apple Maps &rarr; tap <strong>Share Trip Progress</strong> &rarr; Copy Link.<br>2. Paste below to send your real-time moving route to all riders:</p>
             <input type="url" id="liveTripUrlInput" value="${ride.liveMapLink || ''}" placeholder="Paste maps.app.goo.gl/... live link here" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs">
             <button onclick="sendPastedLiveLink('${ride.id}')" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-xs">
               Send Live Trip Link to All Riders
             </button>
           </div>
 
-          <!-- Option 2: Direct WhatsApp Native Live Location -->
           <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2">
             <p class="text-xs font-bold text-gray-900">Option 2: WhatsApp Native Live Location</p>
             <p class="text-[11px] text-gray-500">Opens WhatsApp directly so you can tap <strong>+ &rarr; Location &rarr; Share Live Location</strong> inside your chat:</p>
@@ -886,7 +1375,7 @@
     }
 
     /*****************************************************************
-     * 8. MODALS: SCHEDULE RIDE & PAYMENT CHECKLIST
+     * 9. UNIFIED RIDE SCHEDULER / EDITOR (SUPPORTS 0 RIDERS, RETURN SWAP, PAST RIDES)
      *****************************************************************/
     function openModal(html) {
       document.getElementById('modalContent').innerHTML = html;
@@ -897,72 +1386,156 @@
       document.getElementById('modalBackdrop').classList.add('hidden');
     }
 
-    function openScheduleModal() {
-      if (state.routes.length === 0 || state.riders.length === 0) {
-        alert('Please add at least one Route and one Rider in the Setup tab first.');
+    function openRideFormModal(editRideId = null) {
+      if (state.routes.length === 0) {
+        alert('Please add at least one Route in Setup -> Routes DB first.');
         switchTab('setup');
         return;
       }
 
-      const routeOptions = state.routes.map(rt => `<option value="${rt.id}" data-time="${rt.defaultTime}">${rt.name} (${rt.capacity} seats)</option>`).join('');
+      const existing = editRideId ? state.rides.find(r => r.id === editRideId) : null;
+      const defaultRoute = existing
+        ? (state.routes.find(rt => rt.id === existing.routeId) || state.routes[0])
+        : state.routes[0];
 
-      const riderCheckboxes = state.riders.map(r => `
-        <div class="border border-gray-200 rounded-2xl p-3 space-y-2 bg-gray-50/60">
-          <label class="flex items-center justify-between cursor-pointer">
-            <div class="flex items-center gap-2.5">
-              <input type="checkbox" class="sched-rider-cb w-5 h-5 rounded accent-blue-600" value="${r.id}" onchange="toggleRiderOverride('${r.id}', this.checked)">
-              <div>
-                <p class="text-sm font-bold text-gray-900">${r.name}</p>
-                <p class="text-[11px] text-gray-500">${r.pickup} ${ICONS.arrowRight} ${r.drop}</p>
-              </div>
-            </div>
-            <span class="text-xs font-bold text-blue-600">${formatCurrency(r.defaultFare)}</span>
-          </label>
-          <div id="override_${r.id}" class="hidden grid grid-cols-3 gap-1.5 pt-2 border-t border-gray-200/80">
-            <input type="text" id="ov_pickup_${r.id}" value="${r.pickup}" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Pickup">
-            <input type="text" id="ov_drop_${r.id}" value="${r.drop}" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Drop">
-            <input type="number" id="ov_fare_${r.id}" value="${r.defaultFare}" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-semibold" placeholder="Fare">
-          </div>
-        </div>
+      const routeOptions = state.routes.map(rt => `
+        <option value="${rt.id}"
+          data-time="${rt.defaultTime}"
+          data-toll="${rt.defaultToll || 0}"
+          data-from="${rt.fromPoint || ''}"
+          data-to="${rt.toPoint || ''}"
+          data-cap="${rt.capacity || 4}"
+          data-return="${rt.isReturn ? '1' : '0'}"
+          ${defaultRoute && rt.id === defaultRoute.id ? 'selected' : ''}>
+          ${rt.name} ${rt.isReturn ? '(Return Swap)' : ''}
+        </option>
       `).join('');
 
+      const riderCheckboxes = state.riders.map(r => {
+        const existingP = existing ? existing.passengers.find(p => p.riderId === r.id) : null;
+        const isChecked = !!existingP;
+
+        const autoSwap = !existing && defaultRoute && defaultRoute.isReturn;
+        const initPickup = existingP ? existingP.pickup : (autoSwap ? r.drop : r.pickup);
+        const initDrop = existingP ? existingP.drop : (autoSwap ? r.pickup : r.drop);
+        const initFare = existingP ? existingP.fare : r.defaultFare;
+        const initPaid = existingP ? existingP.paid : false;
+        const initPaidAmt = existingP ? existingP.paidAmount : r.defaultFare;
+        const initPayMode = existingP ? (existingP.payMode || 'UPI') : 'UPI';
+
+        return `
+          <div class="border border-gray-200 rounded-2xl p-3 space-y-2 bg-gray-50/60">
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2.5 cursor-pointer flex-1">
+                <input type="checkbox" class="sched-rider-cb w-5 h-5 rounded accent-blue-600" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="toggleRiderOverride('${r.id}', this.checked)">
+                <div>
+                  <p class="text-sm font-bold text-gray-900">${r.name} ${r.company ? `<span class="text-[10px] font-normal text-gray-500">(${r.company})</span>` : ''}</p>
+                  <p class="text-[11px] text-gray-500">${initPickup} ${ICONS.arrowRight} ${initDrop}</p>
+                </div>
+              </label>
+              <span class="text-xs font-bold text-blue-600">${formatCurrency(initFare)}</span>
+            </div>
+
+            <div id="override_${r.id}" class="${isChecked ? '' : 'hidden'} space-y-2 pt-2 border-t border-gray-200/80">
+              <div class="flex items-center gap-1.5">
+                <input type="text" id="ov_pickup_${r.id}" value="${initPickup}" class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Pickup">
+                <button type="button" onclick="swapSingleRiderPoints('${r.id}')" class="bg-gray-200 text-gray-700 p-1 rounded-lg" title="Swap Pickup & Drop">${ICONS.swap}</button>
+                <input type="text" id="ov_drop_${r.id}" value="${initDrop}" class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Drop">
+              </div>
+              <div class="grid grid-cols-3 gap-1.5 items-center">
+                <div>
+                  <span class="text-[9px] text-gray-400 uppercase block">Fare (${RS})</span>
+                  <input type="number" id="ov_fare_${r.id}" value="${initFare}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-bold">
+                </div>
+                <div>
+                  <span class="text-[9px] text-gray-400 uppercase block">Paid?</span>
+                  <label class="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-semibold">
+                    <input type="checkbox" id="ov_paid_${r.id}" ${initPaid ? 'checked' : ''} class="accent-emerald-600"> Paid
+                  </label>
+                </div>
+                <div>
+                  <span class="text-[9px] text-gray-400 uppercase block">Paid Amt</span>
+                  <input type="number" id="ov_paidamt_${r.id}" value="${initPaidAmt}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]">
+                </div>
+              </div>
+              <input type="hidden" id="ov_paymode_${r.id}" value="${initPayMode}">
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const initFrom = existing ? (existing.fromPoint || '') : (defaultRoute.fromPoint || '');
+      const initTo = existing ? (existing.toPoint || '') : (defaultRoute.toPoint || '');
+      const initToll = existing ? (existing.tollCost ?? 0) : (defaultRoute.defaultToll || 0);
+      const initCap = existing ? (existing.capacity || 4) : (defaultRoute.capacity || 4);
+      const initStatus = existing ? existing.status : 'scheduled';
+      const selectedCount = existing ? existing.passengers.length : 0;
+
       openModal(`
-        <div class="space-y-4">
+        <div class="space-y-3.5">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold">Schedule Ride</h3>
+            <h3 class="text-lg font-bold">${existing ? 'Edit / Manage Ride' : 'Schedule or Log Ride'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Name / Route</label>
-            <select id="schedRoute" onchange="onSchedRouteChange()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium outline-none">
-              ${routeOptions}
-            </select>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Name / Route</label>
+              <select id="schedRoute" onchange="onSchedRouteChange()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold outline-none">
+                ${routeOptions}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Status</label>
+              <select id="schedStatus" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold outline-none">
+                <option value="scheduled" ${initStatus === 'scheduled' ? 'selected' : ''}>Scheduled (Upcoming)</option>
+                <option value="active" ${initStatus === 'active' ? 'selected' : ''}>In Progress</option>
+                <option value="completed" ${initStatus === 'completed' ? 'selected' : ''}>Completed (Past Ride)</option>
+              </select>
+            </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Date</label>
-              <input type="date" id="schedDate" value="${todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none">
+          <div class="flex items-center gap-1.5">
+            <div class="flex-1">
+              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">From</label>
+              <input type="text" id="schedFrom" value="${initFrom}" placeholder="Origin" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs">
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Start Time</label>
-              <input type="time" id="schedTime" value="${state.routes[0].defaultTime}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none">
+            <button type="button" onclick="swapAllRidePoints()" class="mt-4 bg-blue-50 text-blue-600 border border-blue-200 p-2 rounded-xl" title="Swap From/To & All Riders">${ICONS.swap}</button>
+            <div class="flex-1">
+              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">To</label>
+              <input type="text" id="schedTo" value="${initTo}" placeholder="Destination" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs">
             </div>
           </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Date</label>
+              <input type="date" id="schedDate" value="${existing ? existing.date : todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Start Time</label>
+              <input type="time" id="schedTime" value="${existing ? existing.time : defaultRoute.defaultTime}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Default Toll (${RS})</label>
+              <input type="number" id="schedToll" value="${initToll}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs font-bold">
+            </div>
+          </div>
+
+          <input type="hidden" id="schedCap" value="${initCap}">
 
           <div>
             <div class="flex justify-between items-center mb-1.5">
-              <label class="text-xs font-semibold text-gray-600">Select Riders</label>
-              <span id="seatCounterBadge" class="text-[11px] font-bold text-blue-600">0 selected</span>
+              <label class="text-xs font-semibold text-gray-600">Riders (Optional now, add anytime)</label>
+              <span id="seatCounterBadge" class="text-[11px] font-bold text-blue-600">${selectedCount} / ${initCap} seats</span>
             </div>
-            <div class="space-y-2 max-h-60 overflow-y-auto pr-0.5">
-              ${riderCheckboxes}
+            <div class="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+              ${riderCheckboxes || '<p class="text-xs text-gray-400 text-center py-3">No riders in DB yet. You can still schedule now and add riders later.</p>'}
             </div>
           </div>
 
-          <button onclick="saveScheduledRide()" class="w-full bg-blue-600 active:bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow-sm">
-            Save Scheduled Ride
+          <button onclick="saveRideForm('${editRideId || ''}')" class="w-full bg-blue-600 active:bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow-sm">
+            ${existing ? 'Update Ride Details' : 'Save Ride'}
           </button>
         </div>
       `);
@@ -971,9 +1544,44 @@
     function onSchedRouteChange() {
       const sel = document.getElementById('schedRoute');
       const opt = sel.options[sel.selectedIndex];
-      if (opt && opt.dataset.time) {
-        document.getElementById('schedTime').value = opt.dataset.time;
+      if (!opt) return;
+      document.getElementById('schedTime').value = opt.dataset.time || '08:30';
+      document.getElementById('schedToll').value = opt.dataset.toll || '0';
+      document.getElementById('schedFrom').value = opt.dataset.from || '';
+      document.getElementById('schedTo').value = opt.dataset.to || '';
+      document.getElementById('schedCap').value = opt.dataset.cap || '4';
+
+      const isReturn = opt.dataset.return === '1';
+      state.riders.forEach(r => {
+        const pEl = document.getElementById(`ov_pickup_${r.id}`);
+        const dEl = document.getElementById(`ov_drop_${r.id}`);
+        if (pEl && dEl) {
+          pEl.value = isReturn ? r.drop : r.pickup;
+          dEl.value = isReturn ? r.pickup : r.drop;
+        }
+      });
+    }
+
+    function swapSingleRiderPoints(riderId) {
+      const pEl = document.getElementById(`ov_pickup_${riderId}`);
+      const dEl = document.getElementById(`ov_drop_${riderId}`);
+      if (pEl && dEl) {
+        const tmp = pEl.value;
+        pEl.value = dEl.value;
+        dEl.value = tmp;
       }
+    }
+
+    function swapAllRidePoints() {
+      const fEl = document.getElementById('schedFrom');
+      const tEl = document.getElementById('schedTo');
+      if (fEl && tEl) {
+        const tmp = fEl.value;
+        fEl.value = tEl.value;
+        tEl.value = tmp;
+      }
+      state.riders.forEach(r => swapSingleRiderPoints(r.id));
+      showToast('Swapped Pickup & Drop points!');
     }
 
     function toggleRiderOverride(riderId, checked) {
@@ -982,106 +1590,150 @@
       else box.classList.add('hidden');
 
       const count = document.querySelectorAll('.sched-rider-cb:checked').length;
-      document.getElementById('seatCounterBadge').textContent = `${count} selected`;
+      const cap = document.getElementById('schedCap').value || 4;
+      document.getElementById('seatCounterBadge').textContent = `${count} / ${cap} seats`;
     }
 
-    function saveScheduledRide() {
+    function saveRideForm(editRideId) {
       const routeId = document.getElementById('schedRoute').value;
       const routeObj = state.routes.find(r => r.id === routeId);
-      const date = document.getElementById('schedDate').value;
-      const time = document.getElementById('schedTime').value;
+      const status = document.getElementById('schedStatus').value;
+      const fromPoint = document.getElementById('schedFrom').value.trim();
+      const toPoint = document.getElementById('schedTo').value.trim();
+      const date = document.getElementById('schedDate').value || todayStr();
+      const time = document.getElementById('schedTime').value || '08:30';
+      const tollCost = parseFloat(document.getElementById('schedToll').value) || 0;
+      const capacity = parseInt(document.getElementById('schedCap').value, 10) || (routeObj ? routeObj.capacity : 4);
 
       const checkedBoxes = Array.from(document.querySelectorAll('.sched-rider-cb:checked'));
-      if (checkedBoxes.length === 0) {
-        alert('Please select at least one rider.');
-        return;
-      }
-
       const passengers = checkedBoxes.map(cb => {
         const rid = cb.value;
         const base = state.riders.find(r => r.id === rid);
+        const fare = parseFloat(document.getElementById(`ov_fare_${rid}`).value) || base.defaultFare;
+        const isPaid = document.getElementById(`ov_paid_${rid}`).checked;
+        const paidAmt = parseFloat(document.getElementById(`ov_paidamt_${rid}`).value) || 0;
+        const payMode = document.getElementById(`ov_paymode_${rid}`).value || 'UPI';
+
         return {
           riderId: rid,
           name: base.name,
           phone: base.phone,
+          company: base.company || '',
           pickup: document.getElementById(`ov_pickup_${rid}`).value.trim() || base.pickup,
           drop: document.getElementById(`ov_drop_${rid}`).value.trim() || base.drop,
-          fare: parseFloat(document.getElementById(`ov_fare_${rid}`).value) || base.defaultFare,
-          paid: false,
-          paidAmount: 0,
-          payMode: 'UPI'
+          fare,
+          paid: isPaid,
+          paidAmount: isPaid ? (paidAmt > 0 ? paidAmt : fare) : 0,
+          payMode
         };
       });
 
-      state.rides.unshift({
-        id: 'ride_' + Date.now(),
-        routeId,
-        routeName: routeObj ? routeObj.name : 'Carpool Ride',
-        date: date || todayStr(),
-        time: time || '08:30',
-        status: 'scheduled',
-        liveMapLink: '',
-        passengers
-      });
+      if (editRideId) {
+        const idx = state.rides.findIndex(r => r.id === editRideId);
+        if (idx !== -1) {
+          state.rides[idx] = {
+            ...state.rides[idx],
+            routeId,
+            routeName: routeObj ? routeObj.name : state.rides[idx].routeName,
+            fromPoint,
+            toPoint,
+            date,
+            time,
+            capacity,
+            tollCost,
+            status,
+            passengers
+          };
+        }
+        showToast('Ride updated!');
+      } else {
+        state.rides.unshift({
+          id: 'ride_' + Date.now(),
+          routeId,
+          routeName: routeObj ? routeObj.name : 'Carpool Ride',
+          fromPoint,
+          toPoint,
+          date,
+          time,
+          capacity,
+          tollCost,
+          status,
+          liveMapLink: '',
+          passengers
+        });
+        ridesFilter = status === 'completed' ? 'completed' : 'upcoming';
+        showToast(status === 'completed' ? 'Past ride logged!' : 'Ride scheduled!');
+      }
 
       closeModal();
       currentTab = 'rides';
-      ridesFilter = 'upcoming';
       saveState();
-      showToast('Ride scheduled!');
     }
 
+    /*****************************************************************
+     * 10. END RIDE SETTLEMENT MODAL (WITH TOLL CHARGES & UNDO PAID)
+     *****************************************************************/
     function openSettlementModal(rideId) {
       const ride = state.rides.find(r => r.id === rideId);
       if (!ride) return;
 
-      const rows = ride.passengers.map((p, idx) => {
-        const defaultVal = p.paidAmount > 0 ? p.paidAmount : p.fare;
-        return `
-          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" id="settle_paid_${idx}" ${p.paid ? 'checked' : ''} class="w-5 h-5 rounded accent-emerald-600">
-                <div>
-                  <p class="text-sm font-bold text-gray-900">${p.name}</p>
-                  <p class="text-[11px] text-gray-500">Default Fare: ${formatCurrency(p.fare)}</p>
+      const rows = ride.passengers.length === 0
+        ? `<p class="text-xs text-gray-400 text-center py-3">No riders were added to this ride.</p>`
+        : ride.passengers.map((p, idx) => {
+            const defaultVal = p.paidAmount > 0 ? p.paidAmount : p.fare;
+            return `
+              <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" id="settle_paid_${idx}" ${p.paid ? 'checked' : ''} class="w-5 h-5 rounded accent-emerald-600">
+                    <div>
+                      <p class="text-sm font-bold text-gray-900">${p.name}</p>
+                      <p class="text-[11px] text-gray-500">Default Fare: ${formatCurrency(p.fare)}</p>
+                    </div>
+                  </label>
+                  <span class="text-xs font-semibold text-gray-500">Paid?</span>
                 </div>
-              </label>
-              <span class="text-xs font-semibold text-gray-500">Received?</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <div>
-                <label class="text-[10px] font-semibold text-gray-500 uppercase">Amount (${RS})</label>
-                <input type="number" id="settle_amt_${idx}" value="${defaultVal}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm font-bold">
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <label class="text-[10px] font-semibold text-gray-500 uppercase">Amount (${RS})</label>
+                    <input type="number" id="settle_amt_${idx}" value="${defaultVal}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm font-bold">
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-semibold text-gray-500 uppercase">Mode</label>
+                    <select id="settle_mode_${idx}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm">
+                      <option value="UPI" ${p.payMode === 'UPI' ? 'selected' : ''}>UPI</option>
+                      <option value="Cash" ${p.payMode === 'Cash' ? 'selected' : ''}>Cash</option>
+                      <option value="Bank" ${p.payMode === 'Bank' ? 'selected' : ''}>Bank</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="text-[10px] font-semibold text-gray-500 uppercase">Mode</label>
-                <select id="settle_mode_${idx}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm">
-                  <option value="UPI" ${p.payMode === 'UPI' ? 'selected' : ''}>UPI</option>
-                  <option value="Cash" ${p.payMode === 'Cash' ? 'selected' : ''}>Cash</option>
-                  <option value="Bank" ${p.payMode === 'Bank' ? 'selected' : ''}>Bank</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+            `;
+          }).join('');
 
       openModal(`
         <div class="space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-lg font-bold">Ride Payment Checklist</h3>
+              <h3 class="text-lg font-bold">Ride Settlement &amp; Toll</h3>
               <p class="text-xs text-gray-500">${ride.routeName} &bull; ${formatDateDisplay(ride.date)}</p>
             </div>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div class="space-y-2.5">${rows}</div>
+          <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-bold text-amber-900">Toll Charges Paid (${RS})</p>
+              <p class="text-[10px] text-amber-700">Pre-filled from schedule (enter 0 if no toll)</p>
+            </div>
+            <input type="number" id="settleTollInput" value="${ride.tollCost ?? 0}" class="w-24 bg-white border border-amber-300 rounded-xl px-2.5 py-2 text-sm font-bold text-right">
+          </div>
+
+          <div class="space-y-2.5 max-h-60 overflow-y-auto">${rows}</div>
 
           <div class="grid grid-cols-2 gap-2 pt-1">
             <button onclick="saveSettlement('${ride.id}', false)" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-2xl shadow-xs">
-              Save Payments
+              Save Settlement
             </button>
             <button onclick="saveSettlement('${ride.id}', true)" class="bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-3 rounded-2xl shadow-xs">
               Save &amp; Thank All
@@ -1095,6 +1747,8 @@
       const ride = state.rides.find(r => r.id === rideId);
       if (!ride) return;
 
+      ride.tollCost = parseFloat(document.getElementById('settleTollInput').value) || 0;
+
       ride.passengers.forEach((p, idx) => {
         const isPaid = document.getElementById(`settle_paid_${idx}`).checked;
         const amt = parseFloat(document.getElementById(`settle_amt_${idx}`).value) || 0;
@@ -1106,16 +1760,16 @@
       });
 
       saveState();
-      if (triggerThankYou) {
+      if (triggerThankYou && ride.passengers.length > 0) {
         initSingleButtonDispatch(rideId, 'end');
       } else {
         closeModal();
-        showToast('Payments updated!');
+        showToast('Settlement & toll saved!');
       }
     }
 
     /*****************************************************************
-     * 9. FUEL & ODOMETER LOG TAB
+     * 11. FUEL & ODOMETER LOG TAB
      *****************************************************************/
     function renderFuel() {
       const sorted = [...state.fuelLogs].sort((a, b) => a.odometer - b.odometer);
@@ -1153,7 +1807,7 @@
             </div>
             <div class="flex items-center gap-2.5">
               <span class="font-bold text-sm text-gray-900">${formatCurrency(entry.totalCost)}</span>
-              <button onclick="deleteFuel('${entry.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg" aria-label="Delete Fuel Log">
+              <button onclick="deleteFuel('${entry.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg" aria-label="Delete Fuel">
                 ${ICONS.trash}
               </button>
             </div>
@@ -1254,7 +1908,7 @@
     }
 
     /*****************************************************************
-     * 10. SETUP TAB (RIDERS DB, ROUTES DB, TEMPLATES, BACKUP)
+     * 12. SETUP TAB (RIDERS DB, ROUTES DB, PROFILE & TEMPLATES, CLOUD SYNC)
      *****************************************************************/
     function setSetupSubTab(st) {
       setupSubTab = st;
@@ -1263,10 +1917,11 @@
 
     function renderSetup() {
       const subNav = `
-        <div class="grid grid-cols-3 bg-gray-200/80 p-1 rounded-xl text-xs font-semibold">
+        <div class="grid grid-cols-4 bg-gray-200/80 p-1 rounded-xl text-[11px] font-semibold">
           <button onclick="setSetupSubTab('riders')" class="py-1.5 rounded-lg transition ${setupSubTab === 'riders' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Riders DB</button>
           <button onclick="setSetupSubTab('routes')" class="py-1.5 rounded-lg transition ${setupSubTab === 'routes' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Routes DB</button>
-          <button onclick="setSetupSubTab('templates')" class="py-1.5 rounded-lg transition ${setupSubTab === 'templates' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Templates &amp; Data</button>
+          <button onclick="setSetupSubTab('templates')" class="py-1.5 rounded-lg transition ${setupSubTab === 'templates' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Profile/Msg</button>
+          <button onclick="setSetupSubTab('cloud')" class="py-1.5 rounded-lg transition ${setupSubTab === 'cloud' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Cloud/Data</button>
         </div>
       `;
 
@@ -1274,9 +1929,13 @@
         const riderCards = state.riders.map(r => `
           <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between">
             <div>
-              <p class="font-bold text-sm text-gray-900">${r.name} <span class="text-xs font-semibold text-blue-600 ml-1">${formatCurrency(r.defaultFare)}</span></p>
+              <div class="flex items-center gap-1.5">
+                <p class="font-bold text-sm text-gray-900">${r.name}</p>
+                <span class="text-xs font-bold text-blue-600">${formatCurrency(r.defaultFare)}</span>
+              </div>
+              ${r.company ? `<p class="text-[11px] font-semibold text-indigo-600">${r.company}</p>` : ''}
               <p class="text-xs text-gray-500 mt-0.5">${r.pickup} ${ICONS.arrowRight} ${r.drop}</p>
-              <p class="text-[11px] text-gray-400 mt-0.5">+${r.phone}</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">+${r.phone}${r.shift ? ' &bull; ' + r.shift : ''}</p>
             </div>
             <div class="flex items-center gap-1.5">
               <button onclick="openRiderFormModal('${r.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl">Edit</button>
@@ -1300,8 +1959,12 @@
         const routeCards = state.routes.map(rt => `
           <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between">
             <div>
-              <p class="font-bold text-sm text-gray-900">${rt.name}</p>
-              <p class="text-xs text-gray-500 mt-0.5">Default Time: ${rt.defaultTime} &bull; Capacity: ${rt.capacity} seats</p>
+              <div class="flex items-center gap-1.5">
+                <p class="font-bold text-sm text-gray-900">${rt.name}</p>
+                ${rt.isReturn ? `<span class="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">Return Swap</span>` : ''}
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">${rt.fromPoint || 'Start'} ${ICONS.arrowRight} ${rt.toPoint || 'End'}</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Time: ${formatTime12Hr(rt.defaultTime)} &bull; ${rt.capacity} seats &bull; Toll: ${formatCurrency(rt.defaultToll || 0)}</p>
             </div>
             <div class="flex items-center gap-1.5">
               <button onclick="openRouteFormModal('${rt.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl">Edit</button>
@@ -1321,48 +1984,152 @@
         `;
       }
 
+      if (setupSubTab === 'templates') {
+        return `
+          ${subNav}
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Driver Profile &amp; Admin Post Details</h3>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Your Name</label>
+                <input type="text" id="setDriverName" value="${state.settings.driverName || ''}" placeholder="Raj Reddy" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Contact Number</label>
+                <input type="tel" id="setDriverPhone" value="${state.settings.driverPhone || ''}" placeholder="9959344266" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Vehicle Details</label>
+                <input type="text" id="setVehicleInfo" value="${state.settings.vehicleInfo || ''}" placeholder="Tiago (Blue) 6259" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Admin Phone</label>
+                <input type="tel" id="setAdminPhone" value="${state.settings.adminPhone || ''}" placeholder="919876543210 (Optional)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Your UPI ID</label>
+                <input type="text" id="setUpi" value="${state.settings.upiId || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Group Link (Optional)</label>
+                <input type="url" id="setGroupLink" value="${state.settings.groupLink || ''}" placeholder="https://chat.whatsapp.com/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Custom WhatsApp Message Templates</h3>
+            <p class="text-[11px] text-gray-400">Tags: <code class="bg-gray-100 px-1 rounded">{Name}</code> <code class="bg-gray-100 px-1 rounded">{RideName}</code> <code class="bg-gray-100 px-1 rounded">{Pickup}</code> <code class="bg-gray-100 px-1 rounded">{Amount}</code> <code class="bg-gray-100 px-1 rounded">{UPI}</code> <code class="bg-gray-100 px-1 rounded">{Date}</code> <code class="bg-gray-100 px-1 rounded">{Time}</code></p>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Started Message</label>
+              <textarea id="setMsgStart" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgStart}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Ended / Thank You Message</label>
+              <textarea id="setMsgEnd" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgEnd}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Reminder Message</label>
+              <textarea id="setMsgReminder" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgReminder}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Time Update Message</label>
+              <textarea id="setMsgTimeUpdate" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgTimeUpdate}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Cancelled Message</label>
+              <textarea id="setMsgCancelled" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgCancelled}</textarea>
+            </div>
+
+            <button onclick="saveTemplates()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-xl shadow-xs">
+              Save Profile &amp; Templates
+            </button>
+          </div>
+        `;
+      }
+
+      const lastSyncText = state.settings.lastSyncedAt
+        ? new Date(state.settings.lastSyncedAt).toLocaleString('en-IN')
+        : 'Not synced yet';
+
       return `
         ${subNav}
         <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">UPI, Group &amp; Custom WhatsApp Messages</h3>
-          <p class="text-[11px] text-gray-400">Available tags: <code class="bg-gray-100 px-1 rounded">{Name}</code> <code class="bg-gray-100 px-1 rounded">{RideName}</code> <code class="bg-gray-100 px-1 rounded">{Pickup}</code> <code class="bg-gray-100 px-1 rounded">{Amount}</code> <code class="bg-gray-100 px-1 rounded">{UPI}</code> <code class="bg-gray-100 px-1 rounded">{Date}</code></p>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="text-blue-600">${ICONS.cloud}</span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-700">Google Sheet Cloud Backup</h3>
+            </div>
+            <button onclick="openAppsScriptGuideModal()" class="text-[11px] font-bold text-blue-600 underline">Setup Guide</button>
+          </div>
+
+          <p class="text-[11px] text-gray-500">Connect your private Google Sheet so your rides, payments, and fuel logs stay safe even if Safari is uninstalled.</p>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Your UPI ID (Auto-Embedded)</label>
-            <input type="text" id="setUpi" value="${state.settings.upiId}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Your Gmail ID</label>
+            <input type="email" id="setCloudGmail" value="${state.settings.cloudGmail || ''}" placeholder="yourname@gmail.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Carpool WhatsApp Group Link (Optional &mdash; for 1-Tap Group Send)</label>
-            <input type="url" id="setGroupLink" value="${state.settings.groupLink || ''}" placeholder="https://chat.whatsapp.com/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Google Sheet Link (For Quick Viewing)</label>
+            <div class="flex gap-1.5">
+              <input type="url" id="setSheetUrl" value="${state.settings.googleSheetUrl || ''}" placeholder="https://docs.google.com/spreadsheets/d/..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              ${state.settings.googleSheetUrl ? `<a href="${state.settings.googleSheetUrl}" target="_blank" rel="noopener noreferrer" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl flex items-center">Open</a>` : ''}
+            </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Started Message</label>
-            <textarea id="setMsgStart" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgStart}</textarea>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Google Apps Script Web App URL (Auto-Sync Engine)</label>
+            <input type="url" id="setScriptUrl" value="${state.settings.appsScriptUrl || ''}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Ended / Thank You Message</label>
-            <textarea id="setMsgEnd" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgEnd}</textarea>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Auto-Sync / Backup Frequency</label>
+            <select id="setSyncFreq" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold">
+              <option value="realtime" ${state.settings.syncFrequency === 'realtime' ? 'selected' : ''}>Real-Time (Auto-sync on every change)</option>
+              <option value="daily" ${state.settings.syncFrequency === 'daily' ? 'selected' : ''}>Daily Auto-Backup</option>
+              <option value="weekly" ${state.settings.syncFrequency === 'weekly' ? 'selected' : ''}>Weekly Auto-Backup</option>
+              <option value="off" ${state.settings.syncFrequency === 'off' ? 'selected' : ''}>Manual Only (Off)</option>
+            </select>
           </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Reminder Message</label>
-            <textarea id="setMsgReminder" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgReminder}</textarea>
-          </div>
-
-          <button onclick="saveTemplates()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-xl shadow-xs">
-            Save Templates &amp; Settings
+          <button onclick="saveCloudSettings()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs">
+            Save Cloud Settings
           </button>
+
+          <div class="pt-2 border-t border-gray-100 space-y-2">
+            <div class="flex justify-between items-center text-[11px] text-gray-500">
+              <span>Last Cloud Backup:</span>
+              <span class="font-semibold text-gray-800">${lastSyncText}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="pushToGoogleSheet(false)" class="bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-xs">
+                Sync Now (Backup)
+              </button>
+              <button onclick="pullFromGoogleSheet()" class="bg-gray-100 active:bg-gray-200 text-gray-800 text-xs font-bold py-2.5 rounded-xl">
+                Restore from Cloud
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Offline Backup &amp; Export</h3>
-          <p class="text-[11px] text-gray-500">Your data is stored locally on this iPhone. Download a backup file regularly to save in iCloud Files.</p>
-          <div class="grid grid-cols-2 gap-2 pt-1">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Local File Backup &amp; CSV Export</h3>
+          <div class="grid grid-cols-2 gap-2">
             <button onclick="downloadBackupJSON()" class="bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-xl">
-              Backup JSON
+              Download JSON
             </button>
             <label class="bg-gray-100 text-gray-800 text-xs font-semibold py-2.5 rounded-xl text-center cursor-pointer">
               Restore JSON
@@ -1379,35 +2146,101 @@
       `;
     }
 
+    function openAppsScriptGuideModal() {
+      const scriptCode = `function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('CarpoolBackup') || ss.insertSheet('CarpoolBackup');
+  var payload = JSON.parse(e.postData.contents);
+  sheet.clear();
+  sheet.appendRow(['UpdatedAt', 'Gmail', 'RawJSON']);
+  sheet.appendRow([payload.updatedAt, payload.gmail, JSON.stringify(payload.data)]);
+  return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('CarpoolBackup');
+  if (!sheet || sheet.getLastRow() < 2) {
+    return ContentService.createTextOutput(JSON.stringify({status: 'empty'})).setMimeType(ContentService.MimeType.JSON);
+  }
+  var raw = sheet.getRange(2, 3).getValue();
+  return ContentService.createTextOutput(JSON.stringify({status: 'ok', data: JSON.parse(raw)})).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+      openModal(`
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold">Connect Google Sheet (1-Time Setup)</h3>
+            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+          </div>
+          <ol class="text-xs text-gray-600 space-y-1.5 list-decimal pl-4">
+            <li>Open a new Google Sheet in your Gmail account and copy its URL.</li>
+            <li>In the Sheet menu, tap <strong>Extensions &rarr; Apps Script</strong>.</li>
+            <li>Delete any code there, paste the script below, and tap <strong>Save</strong>.</li>
+            <li>Tap <strong>Deploy &rarr; New deployment &rarr; Web app</strong>. Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em> &rarr; Deploy.</li>
+            <li>Copy the <strong>Web App URL</strong> (ends in <code>/exec</code>) and paste it into Carpool Pro!</li>
+          </ol>
+          <textarea id="appsScriptCodeBox" rows="8" readonly class="w-full bg-gray-900 text-emerald-300 font-mono text-[10px] p-2.5 rounded-xl">${scriptCode}</textarea>
+          <button onclick="copyAppsScriptCode()" class="w-full bg-blue-600 text-white text-xs font-bold py-2.5 rounded-xl">
+            Copy Apps Script Code
+          </button>
+        </div>
+      `);
+    }
+
+    function copyAppsScriptCode() {
+      const el = document.getElementById('appsScriptCodeBox');
+      el.select();
+      navigator.clipboard.writeText(el.value).then(() => showToast('Apps Script copied!'));
+    }
+
     function openRiderFormModal(riderId = null) {
       const existing = riderId ? state.riders.find(r => r.id === riderId) : null;
       openModal(`
-        <div class="space-y-3.5">
+        <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold">${existing ? 'Edit Rider' : 'New Rider'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
-            <input type="text" id="rfName" value="${existing ? existing.name : ''}" placeholder="e.g. Rahul Sharma" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name *</label>
+              <input type="text" id="rfName" value="${existing ? existing.name : ''}" placeholder="Rahul Sharma" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Company</label>
+              <input type="text" id="rfCompany" value="${existing ? (existing.company || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Phone (with 91)</label>
-              <input type="tel" id="rfPhone" value="${existing ? existing.phone : '91'}" placeholder="919876543210" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Phone (91) *</label>
+              <input type="tel" id="rfPhone" value="${existing ? existing.phone : '91'}" placeholder="919876543210" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default Fare (${RS})</label>
-              <input type="number" id="rfFare" value="${existing ? existing.defaultFare : ''}" placeholder="150" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold">
+              <input type="number" id="rfFare" value="${existing ? existing.defaultFare : ''}" placeholder="150" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Default Pickup Point</label>
-            <input type="text" id="rfPickup" value="${existing ? existing.pickup : ''}" placeholder="e.g. LB Nagar Metro" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default Pickup</label>
+              <input type="text" id="rfPickup" value="${existing ? existing.pickup : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default Drop</label>
+              <input type="text" id="rfDrop" value="${existing ? existing.drop : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Default Drop Point</label>
-            <input type="text" id="rfDrop" value="${existing ? existing.drop : ''}" placeholder="e.g. Hitec City" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Preferred Shift Timing</label>
+              <input type="text" id="rfShift" value="${existing ? (existing.shift || '') : ''}" placeholder="09:00 AM - 06:00 PM" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Landmark / Notes</label>
+              <input type="text" id="rfNotes" value="${existing ? (existing.notes || '') : ''}" placeholder="Gate 2 / Pays Friday" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
           </div>
           <button onclick="saveRiderForm('${riderId || ''}')" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-sm">
             Save Rider
@@ -1418,21 +2251,25 @@
 
     function saveRiderForm(riderId) {
       const name = document.getElementById('rfName').value.trim();
+      const company = document.getElementById('rfCompany').value.trim();
       const phone = document.getElementById('rfPhone').value.trim().replace(/[^0-9]/g, '');
       const defaultFare = parseFloat(document.getElementById('rfFare').value) || 0;
       const pickup = document.getElementById('rfPickup').value.trim() || 'Pickup';
       const drop = document.getElementById('rfDrop').value.trim() || 'Drop';
+      const shift = document.getElementById('rfShift').value.trim();
+      const notes = document.getElementById('rfNotes').value.trim();
 
       if (!name || !phone) {
         alert('Name and Phone number are required.');
         return;
       }
 
+      const riderObj = { id: riderId || ('r_' + Date.now()), name, company, phone, pickup, drop, defaultFare, shift, notes };
       if (riderId) {
         const idx = state.riders.findIndex(r => r.id === riderId);
-        if (idx !== -1) state.riders[idx] = { id: riderId, name, phone, pickup, drop, defaultFare };
+        if (idx !== -1) state.riders[idx] = riderObj;
       } else {
-        state.riders.push({ id: 'r_' + Date.now(), name, phone, pickup, drop, defaultFare });
+        state.riders.push(riderObj);
       }
 
       closeModal();
@@ -1449,25 +2286,46 @@
     function openRouteFormModal(routeId = null) {
       const existing = routeId ? state.routes.find(r => r.id === routeId) : null;
       openModal(`
-        <div class="space-y-3.5">
+        <div class="space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold">${existing ? 'Edit Ride Route' : 'New Ride Route'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Ride / Route Name</label>
-            <input type="text" id="rtName" value="${existing ? existing.name : ''}" placeholder="e.g. Office Ride (Morning)" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+            <input type="text" id="rtName" value="${existing ? existing.name : ''}" placeholder="e.g. Return Ride (Evening)" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
           </div>
           <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Default Start Time</label>
-              <input type="time" id="rtTime" value="${existing ? existing.defaultTime : '08:30'}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default From</label>
+              <input type="text" id="rtFrom" value="${existing ? (existing.fromPoint || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Passenger Seats</label>
-              <input type="number" id="rtCap" value="${existing ? existing.capacity : 4}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default To</label>
+              <input type="text" id="rtTo" value="${existing ? (existing.toPoint || '') : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Start Time</label>
+              <input type="time" id="rtTime" value="${existing ? existing.defaultTime : '08:30'}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Seats</label>
+              <input type="number" id="rtCap" value="${existing ? existing.capacity : 4}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default Toll (${RS})</label>
+              <input type="number" id="rtToll" value="${existing ? (existing.defaultToll || 0) : 0}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold">
+            </div>
+          </div>
+          <label class="flex items-center gap-2.5 bg-purple-50 border border-purple-200 rounded-xl p-2.5 cursor-pointer">
+            <input type="checkbox" id="rtIsReturn" ${existing && existing.isReturn ? 'checked' : ''} class="w-4 h-4 accent-purple-600">
+            <div>
+              <p class="text-xs font-bold text-purple-900">Return Trip (Auto-Swap Pickup &amp; Drop)</p>
+              <p class="text-[10px] text-purple-700">Automatically reverses every rider's default Pickup and Drop points when scheduling.</p>
+            </div>
+          </label>
           <button onclick="saveRouteForm('${routeId || ''}')" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-sm">
             Save Route
           </button>
@@ -1477,19 +2335,24 @@
 
     function saveRouteForm(routeId) {
       const name = document.getElementById('rtName').value.trim();
+      const fromPoint = document.getElementById('rtFrom').value.trim();
+      const toPoint = document.getElementById('rtTo').value.trim();
       const defaultTime = document.getElementById('rtTime').value || '08:30';
       const capacity = parseInt(document.getElementById('rtCap').value, 10) || 4;
+      const defaultToll = parseFloat(document.getElementById('rtToll').value) || 0;
+      const isReturn = document.getElementById('rtIsReturn').checked;
 
       if (!name) {
         alert('Please enter a Ride Name.');
         return;
       }
 
+      const routeObj = { id: routeId || ('rt_' + Date.now()), name, fromPoint, toPoint, defaultTime, capacity, defaultToll, isReturn };
       if (routeId) {
         const idx = state.routes.findIndex(r => r.id === routeId);
-        if (idx !== -1) state.routes[idx] = { id: routeId, name, defaultTime, capacity };
+        if (idx !== -1) state.routes[idx] = routeObj;
       } else {
-        state.routes.push({ id: 'rt_' + Date.now(), name, defaultTime, capacity });
+        state.routes.push(routeObj);
       }
 
       closeModal();
@@ -1504,13 +2367,28 @@
     }
 
     function saveTemplates() {
+      state.settings.driverName = document.getElementById('setDriverName').value.trim();
+      state.settings.driverPhone = document.getElementById('setDriverPhone').value.trim();
+      state.settings.vehicleInfo = document.getElementById('setVehicleInfo').value.trim();
+      state.settings.adminPhone = document.getElementById('setAdminPhone').value.trim();
       state.settings.upiId = document.getElementById('setUpi').value.trim();
       state.settings.groupLink = document.getElementById('setGroupLink').value.trim();
       state.settings.msgStart = document.getElementById('setMsgStart').value;
       state.settings.msgEnd = document.getElementById('setMsgEnd').value;
       state.settings.msgReminder = document.getElementById('setMsgReminder').value;
+      state.settings.msgTimeUpdate = document.getElementById('setMsgTimeUpdate').value;
+      state.settings.msgCancelled = document.getElementById('setMsgCancelled').value;
       saveState();
-      showToast('Templates & Settings saved!');
+      showToast('Profile & Templates saved!');
+    }
+
+    function saveCloudSettings() {
+      state.settings.cloudGmail = document.getElementById('setCloudGmail').value.trim();
+      state.settings.googleSheetUrl = document.getElementById('setSheetUrl').value.trim();
+      state.settings.appsScriptUrl = document.getElementById('setScriptUrl').value.trim();
+      state.settings.syncFrequency = document.getElementById('setSyncFreq').value;
+      saveState(true);
+      showToast('Cloud backup settings saved!');
     }
 
     function downloadBackupJSON() {
@@ -1545,11 +2423,15 @@
     }
 
     function exportRidesCSV() {
-      let csv = 'Date,Time,Ride Name,Status,Rider Name,Phone,Pickup,Drop,Fare,Paid,Paid Amount,Payment Mode\n';
+      let csv = 'Date,Time,Ride Name,From,To,Toll,Status,Rider Name,Company,Phone,Pickup,Drop,Fare,Paid,Paid Amount,Payment Mode\n';
       state.rides.forEach(ride => {
-        ride.passengers.forEach(p => {
-          csv += `"${ride.date}","${ride.time}","${ride.routeName}","${ride.status}","${p.name}","${p.phone}","${p.pickup}","${p.drop}",${p.fare},${p.paid ? 'Yes' : 'No'},${p.paidAmount || 0},"${p.payMode || ''}"\n`;
-        });
+        if (ride.passengers.length === 0) {
+          csv += `"${ride.date}","${ride.time}","${ride.routeName}","${ride.fromPoint || ''}","${ride.toPoint || ''}",${ride.tollCost || 0},"${ride.status}","", "", "", "", "",0,No,0,""\n`;
+        } else {
+          ride.passengers.forEach(p => {
+            csv += `"${ride.date}","${ride.time}","${ride.routeName}","${ride.fromPoint || ''}","${ride.toPoint || ''}",${ride.tollCost || 0},"${ride.status}","${p.name}","${p.company || ''}","${p.phone}","${p.pickup}","${p.drop}",${p.fare},${p.paid ? 'Yes' : 'No'},${p.paidAmount || 0},"${p.payMode || ''}"\n`;
+          });
+        }
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
@@ -1561,12 +2443,12 @@
     }
 
     function resetAllData() {
-      if (!confirm('This will clear all sample/existing rides, fuel logs, and riders so you can start with a blank slate. Continue?')) return;
+      if (!confirm('Clear all sample/existing rides, fuel logs, and riders so you can start with a blank slate?')) return;
       state = {
         riders: [],
         routes: [
-          { id: 'rt1', name: 'Office Ride (Morning)', defaultTime: '08:30', capacity: 4 },
-          { id: 'rt2', name: 'Home Ride (Evening)', defaultTime: '18:30', capacity: 4 }
+          { id: 'rt1', name: 'Office Ride (Morning)', fromPoint: 'Home', toPoint: 'Office', defaultTime: '08:30', capacity: 4, defaultToll: 0, isReturn: false },
+          { id: 'rt2', name: 'Return Ride (Evening)', fromPoint: 'Office', toPoint: 'Home', defaultTime: '18:30', capacity: 4, defaultToll: 0, isReturn: true }
         ],
         rides: [],
         fuelLogs: [],
@@ -1576,8 +2458,9 @@
       showToast('All records cleared');
     }
 
-    // Initial Render
+    // Initial Render & Periodic Auto-Sync Check
     renderApp();
+    maybeAutoSyncCloud();
   </script>
 </body>
 </html>
