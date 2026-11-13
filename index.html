@@ -37,6 +37,26 @@
       padding: 0;
       overscroll-behavior-y: none;
     }
+    /* Prevent iOS Safari date/time inputs from overflowing grid columns */
+    input[type="date"],
+    input[type="time"],
+    input[type="text"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    select,
+    textarea {
+      max-width: 100%;
+      min-width: 0;
+    }
+    input[type="date"],
+    input[type="time"] {
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 38px;
+    }
     .safe-top {
       padding-top: max(env(safe-area-inset-top), 14px);
     }
@@ -44,12 +64,12 @@
       padding-bottom: max(env(safe-area-inset-bottom), 14px);
     }
     .glass-header {
-      background: rgba(242, 242, 247, 0.88);
+      background: rgba(242, 242, 247, 0.90);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
     }
     .glass-tabbar {
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
     }
@@ -61,11 +81,11 @@
       scrollbar-width: none;
     }
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0.6; }
+      from { transform: translateY(24px); opacity: 0.4; }
       to { transform: translateY(0); opacity: 1; }
     }
     .animate-sheet {
-      animation: slideUp 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: slideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
   </style>
 </head>
@@ -73,16 +93,16 @@
 
   <!-- AUTHENTICATION SCREEN (Shown when signed out) -->
   <div id="authScreen" class="hidden fixed inset-0 z-50 bg-[#F2F2F7] flex flex-col justify-center px-5 safe-top safe-bottom overflow-y-auto">
-    <div class="w-full max-w-sm mx-auto space-y-5">
+    <div class="w-full max-w-md mx-auto space-y-5">
       <div class="text-center space-y-1.5">
         <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center shadow-md">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-gray-900">Carpool Pro</h1>
-        <p class="text-xs text-gray-500">Sign in to sync your rides, payments &amp; fuel logs across all devices</p>
+        <p class="text-xs text-gray-500">Sign in to sync your rides, payments &amp; expenses across all devices</p>
       </div>
 
-      <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3.5">
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-4">
         <div class="grid grid-cols-2 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
           <button type="button" id="authTabLogin" onclick="switchAuthMode('login')" class="py-2 rounded-lg bg-white text-gray-900 shadow-xs">Sign In</button>
           <button type="button" id="authTabSignup" onclick="switchAuthMode('signup')" class="py-2 rounded-lg text-gray-500">Create Account</button>
@@ -108,36 +128,73 @@
           <button type="button" onclick="handleForgotPassword()" class="text-xs font-semibold text-blue-600">Forgot Password?</button>
         </div>
       </div>
-
-      <p class="text-[11px] text-center text-gray-400 px-4">
-        First time signing in on this iPhone? Your existing local rides and riders will automatically upload to your cloud account.
-      </p>
     </div>
   </div>
 
-  <!-- MAIN APP SHELL -->
-  <div id="appShell" class="hidden flex-1 flex flex-col">
-    <!-- Top Sticky Header -->
-    <header class="sticky top-0 z-30 glass-header border-b border-gray-200/80 safe-top px-4 pb-3">
-      <div class="max-w-lg mx-auto flex items-center justify-between">
-        <div>
-          <div class="flex items-center gap-2">
-            <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Ledger</p>
-            <span id="cloudStatusBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Cloud Synced</span>
-          </div>
-          <h1 id="headerTitle" class="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+  <!-- MAIN RESPONSIVE APP SHELL (Desktop Sidebar + Mobile Bottom Tab Bar) -->
+  <div id="appShell" class="hidden flex-1 flex flex-col md:flex-row min-h-screen">
+
+    <!-- Desktop / Laptop Left Sidebar (Hidden on Mobile) -->
+    <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r border-gray-200/80 z-30">
+      <div class="p-5 border-b border-gray-100 flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-xs shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
         </div>
-        <div id="headerActionArea"></div>
+        <div class="min-w-0">
+          <h2 class="font-bold text-base text-gray-900 truncate">Carpool Pro</h2>
+          <span id="cloudStatusBadgeDesktop" class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Cloud Synced</span>
+        </div>
       </div>
-    </header>
 
-    <!-- Main Scrollable Content -->
-    <main id="appMain" class="flex-1 w-full max-w-lg mx-auto px-4 pt-4 pb-28 space-y-4">
-      <!-- Rendered dynamically by JS -->
-    </main>
+      <nav class="flex-1 p-3.5 space-y-1.5">
+        <button onclick="switchTab('dashboard')" id="side-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 text-blue-600 transition">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('rides')" id="side-rides" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+          <span>Rides &amp; Dispatch</span>
+        </button>
+        <button onclick="switchTab('expenses')" id="side-expenses" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Expenses &amp; Fuel</span>
+        </button>
+        <button onclick="switchTab('setup')" id="side-setup" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Setup &amp; DB</span>
+        </button>
+      </nav>
 
-    <!-- Bottom iOS Tab Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 z-30 glass-tabbar border-t border-gray-200/80 safe-bottom">
+      <div class="p-4 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+        <p id="desktopUserEmail" class="font-semibold text-gray-700 truncate"></p>
+        <p class="text-[11px] text-gray-400">v3.5 &bull; Multi-Device Sync</p>
+      </div>
+    </aside>
+
+    <!-- Content Area Wrapper -->
+    <div class="flex-1 flex flex-col md:pl-64 min-w-0">
+      <!-- Top Sticky Header -->
+      <header class="sticky top-0 z-20 glass-header border-b border-gray-200/80 safe-top px-4 md:px-8 pb-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Ledger</p>
+              <span id="cloudStatusBadge" class="md:hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Cloud Synced</span>
+            </div>
+            <h1 id="headerTitle" class="text-2xl font-bold tracking-tight text-gray-900 truncate">Dashboard</h1>
+          </div>
+          <div id="headerActionArea" class="shrink-0"></div>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Content -->
+      <main id="appMain" class="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-28 md:pb-12 space-y-5">
+        <!-- Rendered dynamically by JS -->
+      </main>
+    </div>
+
+    <!-- Bottom iOS Tab Bar (Mobile Only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 glass-tabbar border-t border-gray-200/80 safe-bottom">
       <div class="max-w-lg mx-auto grid grid-cols-4 pt-1.5 pb-1">
         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center justify-center gap-0.5 py-1 text-blue-600">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -147,9 +204,9 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
           <span class="text-[10px] font-semibold">Rides</span>
         </button>
-        <button onclick="switchTab('fuel')" id="tab-fuel" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          <span class="text-[10px] font-semibold">Fuel</span>
+        <button onclick="switchTab('expenses')" id="tab-expenses" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-[10px] font-semibold">Expenses</span>
         </button>
         <button onclick="switchTab('setup')" id="tab-setup" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -160,8 +217,8 @@
   </div>
 
   <!-- Universal Modal Container -->
-  <div id="modalBackdrop" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div id="modalContent" class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 max-h-[92vh] overflow-y-auto safe-bottom animate-sheet shadow-2xl">
+  <div id="modalBackdrop" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-xs flex items-end md:items-center justify-center p-0 md:p-6">
+    <div id="modalContent" class="bg-white w-full max-w-2xl rounded-t-3xl md:rounded-3xl p-5 md:p-6 max-h-[92vh] overflow-y-auto safe-bottom animate-sheet shadow-2xl">
       <!-- Dynamic Modal Inner Content -->
     </div>
   </div>
@@ -198,7 +255,8 @@
       sedan: '\uD83D\uDE98',
       point: '\uD83D\uDC49',
       pray: '\uD83D\uDE4F',
-      smile: '\uD83D\uDE0A'
+      smile: '\uD83D\uDE0A',
+      star: '\u2605'
     };
 
     const ICONS = {
@@ -208,35 +266,45 @@
       stop: '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>',
       pin: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
       send: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>',
-      arrowRight: '<svg class="w-3 h-3 inline mx-0.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>',
+      bolt: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+      arrowRight: '<svg class="w-3 h-3 inline mx-0.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>',
       swap: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>',
       edit: '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
       check: '<svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
-      chevron: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>',
-      cloud: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>'
+      chevron: '<svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>',
+      cloud: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>',
+      search: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>'
     };
 
     function formatCurrency(num) {
       return RS + Math.round(num || 0).toLocaleString('en-IN');
     }
 
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     /*****************************************************************
-     * 3. STATE, FIREBASE AUTH & FIRESTORE REAL-TIME SYNC
+     * 3. STATE, NORMALIZATION & FIREBASE CLOUD SYNC
      *****************************************************************/
     const STORAGE_KEY = 'carpool_pro_v3';
     const todayStr = () => new Date().toISOString().slice(0, 10);
 
     const defaultState = {
       riders: [
-        { id: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Turkayamjal', drop: 'Tech Mahindra', defaultFare: 150, shift: '09:00 AM - 06:00 PM', notes: 'Main Gate Pickup' },
-        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'LB Nagar Metro', drop: 'Gachibowli', defaultFare: 180, shift: '09:30 AM - 06:30 PM', notes: '' }
+        { id: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Turkayamjal', drop: 'Tech Mahindra', defaultFare: 150, shift: '09:00 AM - 06:00 PM', notes: 'Main Gate Pickup', joinedDate: todayStr() },
+        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'LB Nagar Metro', drop: 'Gachibowli', defaultFare: 180, shift: '09:30 AM - 06:30 PM', notes: '', joinedDate: todayStr() }
       ],
       routes: [
         { id: 'rt1', name: 'Office Ride (Morning)', fromPoint: 'Turkayamjal', toPoint: 'Tech Mahindra', defaultTime: '08:30', capacity: 4, defaultToll: 60, isReturn: false },
         { id: 'rt2', name: 'Return Ride (Evening)', fromPoint: 'Tech Mahindra', toPoint: 'Turkayamjal', defaultTime: '15:20', capacity: 4, defaultToll: 60, isReturn: true }
       ],
       rides: [],
-      fuelLogs: [],
+      fuelLogs: [], // Stores both Fuel and general Vehicle Expenses (category: 'Fuel' | 'Toll' | 'Maintenance' | 'Car Wash' | 'Parking' | 'Other')
       settings: {
         driverName: 'Raj Reddy',
         driverPhone: '9959344266',
@@ -253,15 +321,58 @@
       }
     };
 
-    let state = loadLocalState();
+    function normalizeState(raw) {
+      const merged = {
+        ...defaultState,
+        ...(raw || {}),
+        settings: { ...defaultState.settings, ...((raw && raw.settings) || {}) }
+      };
+
+      // Backfill joinedDate for existing riders from their earliest ride date
+      const earliestRideDateByRider = {};
+      (merged.rides || []).forEach(ride => {
+        (ride.passengers || []).forEach(p => {
+          const key = p.riderId || p.name;
+          if (!earliestRideDateByRider[key] || ride.date < earliestRideDateByRider[key]) {
+            earliestRideDateByRider[key] = ride.date;
+          }
+        });
+      });
+
+      merged.riders = (merged.riders || []).map(r => {
+        const inferred = earliestRideDateByRider[r.id] || earliestRideDateByRider[r.name] || todayStr();
+        return {
+          ...r,
+          joinedDate: r.joinedDate || inferred
+        };
+      });
+
+      // Normalize fuelLogs into unified expense entries (default category = 'Fuel')
+      merged.fuelLogs = (merged.fuelLogs || []).map(entry => ({
+        ...entry,
+        category: entry.category || 'Fuel',
+        notes: entry.notes || '',
+        pricePerLiter: entry.pricePerLiter || (entry.liters > 0 && entry.totalCost > 0 ? Number((entry.totalCost / entry.liters).toFixed(2)) : 0)
+      }));
+
+      return merged;
+    }
+
+    let state = normalizeState(loadLocalRaw());
     let currentTab = 'dashboard';
+    let dashboardSubTab = 'ridesFinance'; // 'ridesFinance' | 'ridersAnalytics'
     let dashboardPeriod = 'month';
-    let ridesFilter = 'upcoming';
+    let ridesStatusFilter = 'upcoming'; // 'upcoming' | 'completed' | 'all'
+    let ridesPeriodFilter = 'all'; // 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year'
+    let expenseCategoryFilter = 'all';
     let setupSubTab = 'riders';
     let authMode = 'login';
     let currentUser = null;
     let firestoreUnsubscribe = null;
     let isApplyingRemoteSnapshot = false;
+
+    // Tracks which two fuel inputs were modified last for 3-way auto-calculation
+    let fuelCalcHistory = ['price', 'liters'];
 
     let batchQueue = {
       rideId: null,
@@ -271,17 +382,10 @@
       customNote: ''
     };
 
-    function loadLocalState() {
+    function loadLocalRaw() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('carpool_pro_v2') || localStorage.getItem('carpool_pro_v1');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          return {
-            ...defaultState,
-            ...parsed,
-            settings: { ...defaultState.settings, ...(parsed.settings || {}) }
-          };
-        }
+        if (saved) return JSON.parse(saved);
       } catch (e) {
         console.error('Local load error', e);
       }
@@ -300,18 +404,26 @@
     }
 
     function setCloudBadge(status) {
-      const badge = document.getElementById('cloudStatusBadge');
-      if (!badge) return;
-      if (status === 'synced') {
-        badge.textContent = 'Cloud Synced';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
-      } else if (status === 'syncing') {
-        badge.textContent = 'Syncing...';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
-      } else {
-        badge.textContent = 'Offline Cached';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700';
-      }
+      const badges = [document.getElementById('cloudStatusBadge'), document.getElementById('cloudStatusBadgeDesktop')];
+      badges.forEach(badge => {
+        if (!badge) return;
+        if (status === 'synced') {
+          badge.textContent = 'Cloud Synced';
+          badge.className = badge.id.includes('Desktop')
+            ? 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700'
+            : 'md:hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+        } else if (status === 'syncing') {
+          badge.textContent = 'Syncing...';
+          badge.className = badge.id.includes('Desktop')
+            ? 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700'
+            : 'md:hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+        } else {
+          badge.textContent = 'Offline Cached';
+          badge.className = badge.id.includes('Desktop')
+            ? 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700'
+            : 'md:hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700';
+        }
+      });
     }
 
     async function saveState() {
@@ -352,6 +464,8 @@
     window.auth.onAuthStateChanged(async (user) => {
       if (user) {
         currentUser = user;
+        const emailEl = document.getElementById('desktopUserEmail');
+        if (emailEl) emailEl.textContent = user.email;
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('appShell').classList.remove('hidden');
         await attachUserCloudListener(user);
@@ -380,7 +494,7 @@
             state: JSON.parse(JSON.stringify(state))
           });
           if (migrated) {
-            showToast('Existing iPhone data uploaded to your cloud account!');
+            showToast('Existing data uploaded to your cloud account!');
           }
         }
       } catch (e) {
@@ -391,12 +505,7 @@
       firestoreUnsubscribe = docRef.onSnapshot((doc) => {
         if (doc.exists && doc.data().state) {
           isApplyingRemoteSnapshot = true;
-          const remoteState = doc.data().state;
-          state = {
-            ...defaultState,
-            ...remoteState,
-            settings: { ...defaultState.settings, ...(remoteState.settings || {}) }
-          };
+          state = normalizeState(doc.data().state);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
           setCloudBadge('synced');
           renderApp();
@@ -485,12 +594,18 @@
     }
 
     /*****************************************************************
-     * 5. DATE, TIME & MESSAGE FORMATTING HELPERS
+     * 5. DATE, TIME, PHONE & MESSAGE FORMATTING HELPERS
      *****************************************************************/
     function formatDateDisplay(dateStr) {
       if (!dateStr) return '';
       const d = new Date(dateStr + 'T00:00:00');
       return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+    }
+
+    function formatShortDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
     }
 
     function formatTime12Hr(time24) {
@@ -502,8 +617,17 @@
       return `${String(h).padStart(2, '0')}:${mStr} ${ampm}`;
     }
 
+    function getWeekStartStr(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+      const mon = new Date(d.setDate(diff));
+      return mon.toISOString().slice(0, 10);
+    }
+
     function isDateInPeriod(dateStr, period) {
-      if (period === 'all') return true;
+      if (!period || period === 'all') return true;
+      if (!dateStr) return false;
       const now = new Date();
       const target = new Date(dateStr + 'T00:00:00');
       if (period === 'today') return dateStr === todayStr();
@@ -521,6 +645,13 @@
       }
       if (period === 'year') return target.getFullYear() === now.getFullYear();
       return true;
+    }
+
+    function normalizePhonePlus(phone) {
+      const digits = (phone || '').replace(/[^0-9]/g, '');
+      if (!digits) return '';
+      if (digits.length === 10) return '+91' + digits;
+      return '+' + digits;
     }
 
     function compileMessage(template, vars) {
@@ -550,19 +681,39 @@
       return `https://wa.me/?text=${encodeURIComponent(text)}`;
     }
 
+    function buildShortcutBatchUrl(items) {
+      const jsonStr = JSON.stringify(items);
+      return `shortcuts://run-shortcut?name=CarpoolNotify&input=text&text=${encodeURIComponent(jsonStr)}`;
+    }
+
+    function getRiderRideFrequencyMap() {
+      const counts = {};
+      state.rides.forEach(ride => {
+        (ride.passengers || []).forEach(p => {
+          if (p.riderId) counts[p.riderId] = (counts[p.riderId] || 0) + 1;
+          if (p.name) counts['name:' + p.name] = (counts['name:' + p.name] || 0) + 1;
+        });
+      });
+      return counts;
+    }
+
     /*****************************************************************
      * 6. NAVIGATION & HEADER
      *****************************************************************/
     function switchTab(tab) {
       currentTab = tab;
-      ['dashboard', 'rides', 'fuel', 'setup'].forEach(t => {
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          btn.classList.remove('text-gray-400');
-          btn.classList.add('text-blue-600');
-        } else {
-          btn.classList.remove('text-blue-600');
-          btn.classList.add('text-gray-400');
+      ['dashboard', 'rides', 'expenses', 'setup'].forEach(t => {
+        const mobBtn = document.getElementById(`tab-${t}`);
+        const sideBtn = document.getElementById(`side-${t}`);
+        if (mobBtn) {
+          mobBtn.className = t === tab
+            ? 'flex flex-col items-center justify-center gap-0.5 py-1 text-blue-600'
+            : 'flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400';
+        }
+        if (sideBtn) {
+          sideBtn.className = t === tab
+            ? 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 text-blue-600 transition'
+            : 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition';
         }
       });
       renderApp();
@@ -575,22 +726,22 @@
       const mainEl = document.getElementById('appMain');
 
       if (currentTab === 'dashboard') {
-        subEl.textContent = 'Analytics & Ledger';
+        subEl.textContent = 'Analytics & Insights';
         titleEl.textContent = 'Dashboard';
-        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ New Ride</button>`;
+        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ New Ride</button>`;
         mainEl.innerHTML = renderDashboard();
       } else if (currentTab === 'rides') {
-        subEl.textContent = 'Schedule & Live Trip';
+        subEl.textContent = 'Schedule & Auto-Notify';
         titleEl.textContent = 'Rides';
-        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Schedule</button>`;
+        actionEl.innerHTML = `<button onclick="openRideFormModal()" class="bg-blue-600 active:bg-blue-700 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Schedule</button>`;
         mainEl.innerHTML = renderRides();
-      } else if (currentTab === 'fuel') {
-        subEl.textContent = 'Odometer & Mileage';
-        titleEl.textContent = 'Fuel Log';
-        actionEl.innerHTML = `<button onclick="openFuelModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Log Fuel</button>`;
-        mainEl.innerHTML = renderFuel();
+      } else if (currentTab === 'expenses') {
+        subEl.textContent = 'Fuel, Tolls & Vehicle Costs';
+        titleEl.textContent = 'Expenses';
+        actionEl.innerHTML = `<button onclick="openExpenseModal()" class="bg-blue-600 active:bg-blue-700 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Log Cost</button>`;
+        mainEl.innerHTML = renderExpenses();
       } else if (currentTab === 'setup') {
-        subEl.textContent = 'Master DB & Cloud Account';
+        subEl.textContent = 'Master DB, Shortcuts & Cloud';
         titleEl.textContent = 'Setup';
         actionEl.innerHTML = '';
         mainEl.innerHTML = renderSetup();
@@ -598,29 +749,68 @@
     }
 
     /*****************************************************************
-     * 7. DASHBOARD & DRILL-DOWN REPORTS
+     * 7. DUAL DASHBOARDS (RIDES & FINANCE + RIDERS ANALYTICS)
      *****************************************************************/
     function setPeriod(p) {
       dashboardPeriod = p;
       renderApp();
     }
 
+    function setDashboardSubTab(sub) {
+      dashboardSubTab = sub;
+      renderApp();
+    }
+
+    function renderPeriodPills(activePeriod, handlerName) {
+      const periods = [
+        { id: 'today', label: 'Today' },
+        { id: 'week', label: 'Week' },
+        { id: 'month', label: 'Month' },
+        { id: 'quarter', label: 'Quarter' },
+        { id: 'year', label: 'Year' },
+        { id: 'all', label: 'All Time' }
+      ];
+      return periods.map(p => `
+        <button onclick="${handlerName}('${p.id}')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${activePeriod === p.id ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200/80 hover:bg-gray-50'}">
+          ${p.label}
+        </button>
+      `).join('');
+    }
+
     function renderDashboard() {
+      const subTabs = `
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="grid grid-cols-2 bg-gray-200/80 p-1 rounded-xl text-xs font-semibold w-full sm:w-80">
+            <button onclick="setDashboardSubTab('ridesFinance')" class="py-1.5 rounded-lg transition ${dashboardSubTab === 'ridesFinance' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Rides &amp; Finance</button>
+            <button onclick="setDashboardSubTab('ridersAnalytics')" class="py-1.5 rounded-lg transition ${dashboardSubTab === 'ridersAnalytics' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Riders Analytics</button>
+          </div>
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            ${renderPeriodPills(dashboardPeriod, 'setPeriod')}
+          </div>
+        </div>
+      `;
+
+      if (dashboardSubTab === 'ridersAnalytics') {
+        return subTabs + renderRidersDashboard();
+      }
+      return subTabs + renderRidesFinanceDashboard();
+    }
+
+    function renderRidesFinanceDashboard() {
       const filteredRides = state.rides.filter(r => isDateInPeriod(r.date, dashboardPeriod));
-      const filteredFuel = state.fuelLogs.filter(f => isDateInPeriod(f.date, dashboardPeriod));
+      const filteredExpenses = state.fuelLogs.filter(f => isDateInPeriod(f.date, dashboardPeriod));
 
       let totalBilled = 0;
       let totalCollected = 0;
       let totalPending = 0;
-      let totalTolls = 0;
+      let totalRideTolls = 0;
       const pendingItems = [];
-      const riderStats = {};
       const routeStats = {};
       const dateStats = {};
 
       filteredRides.forEach(ride => {
         const toll = Number(ride.tollCost) || 0;
-        totalTolls += toll;
+        totalRideTolls += toll;
 
         if (!routeStats[ride.routeName]) {
           routeStats[ride.routeName] = { trips: 0, billed: 0, collected: 0, tolls: 0 };
@@ -629,7 +819,9 @@
         routeStats[ride.routeName].tolls += toll;
 
         if (!dateStats[ride.date]) {
-          dateStats[ride.date] = { trips: 0, billed: 0, collected: 0 };
+          dateStats[ride.date] = { trips: 0, billed: 0, collected: 0, expense: toll };
+        } else {
+          dateStats[ride.date].expense += toll;
         }
         dateStats[ride.date].trips += 1;
 
@@ -647,14 +839,6 @@
           dateStats[ride.date].billed += fare;
           dateStats[ride.date].collected += paidAmt;
 
-          if (!riderStats[p.name]) {
-            riderStats[p.name] = { rides: 0, billed: 0, collected: 0, pending: 0, phone: p.phone, company: p.company || '' };
-          }
-          riderStats[p.name].rides += 1;
-          riderStats[p.name].billed += fare;
-          riderStats[p.name].collected += paidAmt;
-          riderStats[p.name].pending += due;
-
           if (due > 0 && ride.status === 'completed') {
             pendingItems.push({
               rideId: ride.id,
@@ -669,24 +853,55 @@
         });
       });
 
-      const totalFuelCost = filteredFuel.reduce((sum, f) => sum + (Number(f.totalCost) || 0), 0);
-      const netRecovery = totalCollected - (totalFuelCost + totalTolls);
+      let totalLoggedExpenses = 0;
+      filteredExpenses.forEach(f => {
+        const cost = Number(f.totalCost) || 0;
+        totalLoggedExpenses += cost;
+        if (!dateStats[f.date]) {
+          dateStats[f.date] = { trips: 0, billed: 0, collected: 0, expense: cost };
+        } else {
+          dateStats[f.date].expense += cost;
+        }
+      });
+
+      const netRecovery = totalCollected - (totalLoggedExpenses + totalRideTolls);
       const paidPct = totalBilled > 0 ? Math.min(100, Math.round((totalCollected / totalBilled) * 100)) : 0;
 
-      const periods = [
-        { id: 'today', label: 'Today' },
-        { id: 'week', label: 'Week' },
-        { id: 'month', label: 'Month' },
-        { id: 'quarter', label: 'Quarter' },
-        { id: 'year', label: 'Year' },
-        { id: 'all', label: 'All Time' }
-      ];
+      // Build Chart Data (Last 8 active dates in period)
+      const chartDates = Object.entries(dateStats)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .slice(-8);
 
-      const periodPills = periods.map(p => `
-        <button onclick="setPeriod('${p.id}')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${dashboardPeriod === p.id ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200/80'}">
-          ${p.label}
-        </button>
-      `).join('');
+      const maxChartVal = Math.max(100, ...chartDates.map(([, s]) => Math.max(s.collected, s.billed, s.expense)));
+
+      const financeChartHtml = chartDates.length === 0
+        ? `<p class="text-xs text-gray-400 text-center py-8">No financial activity to graph in this period.</p>`
+        : `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-[11px] text-gray-500">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-emerald-500 inline-block"></span> Collected</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-rose-400 inline-block"></span> Expenses &amp; Tolls</span>
+              </div>
+              <span>Last ${chartDates.length} active days</span>
+            </div>
+            <div class="grid grid-cols-${chartDates.length} gap-2 items-end h-36 pt-4 px-1 border-b border-gray-100">
+              ${chartDates.map(([dStr, s]) => {
+                const colH = Math.max(4, Math.round((s.collected / maxChartVal) * 100));
+                const expH = Math.max(4, Math.round((s.expense / maxChartVal) * 100));
+                return `
+                  <div class="flex flex-col items-center gap-1 h-full justify-end">
+                    <div class="flex items-end gap-1 w-full justify-center h-28">
+                      <div class="w-2.5 md:w-3.5 bg-emerald-500 rounded-t-sm transition-all" style="height: ${s.collected > 0 ? colH : 2}%" title="Collected: ${formatCurrency(s.collected)}"></div>
+                      <div class="w-2.5 md:w-3.5 bg-rose-400 rounded-t-sm transition-all" style="height: ${s.expense > 0 ? expH : 2}%" title="Expenses/Tolls: ${formatCurrency(s.expense)}"></div>
+                    </div>
+                    <span class="text-[9px] text-gray-500 font-medium truncate max-w-full">${formatShortDate(dStr)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
 
       const pendingHtml = pendingItems.length === 0
         ? `<div class="bg-white rounded-2xl p-4 border border-gray-100 text-center text-xs text-gray-500">All completed rides are settled! No pending dues.</div>`
@@ -699,15 +914,15 @@
             });
             const waUrl = buildWhatsAppUrl(item.phone, reminderText);
             return `
-              <div class="bg-white rounded-2xl p-3.5 border border-orange-100 shadow-xs flex items-center justify-between gap-3">
-                <div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-sm text-gray-900">${item.name}</span>
-                    <span class="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">${formatCurrency(item.due)}</span>
+              <div class="bg-white rounded-2xl p-3.5 border border-orange-100 shadow-xs flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-sm text-gray-900 truncate">${escapeHtml(item.name)}</span>
+                    <span class="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md shrink-0">${formatCurrency(item.due)}</span>
                   </div>
-                  <p class="text-[11px] text-gray-500 mt-0.5">${item.rideName} &bull; ${formatDateDisplay(item.date)}</p>
+                  <p class="text-[11px] text-gray-500 mt-0.5 truncate">${escapeHtml(item.rideName)} &bull; ${formatDateDisplay(item.date)}</p>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 shrink-0">
                   <button onclick="quickMarkPaid('${item.rideId}', '${item.riderId}')" class="bg-gray-100 active:bg-gray-200 text-gray-700 text-[11px] font-semibold px-2.5 py-2 rounded-xl flex items-center gap-1">
                     ${ICONS.check} Paid
                   </button>
@@ -719,40 +934,16 @@
             `;
           }).join('');
 
-      const riderEntries = Object.entries(riderStats).sort((a, b) => b[1].billed - a[1].billed);
-      const riderReportHtml = riderEntries.length === 0
-        ? `<p class="text-xs text-gray-400 text-center py-3">No rider activity in this period.</p>`
-        : riderEntries.map(([name, s]) => `
-            <button onclick="openRiderDrilldown('${name.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 rounded-lg px-1 transition">
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <p class="text-sm font-bold text-gray-900">${name}</p>
-                  ${s.company ? `<span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-1.5 py-0.5 rounded">${s.company}</span>` : ''}
-                </div>
-                <p class="text-[11px] text-gray-500 mt-0.5">${s.rides} ride${s.rides > 1 ? 's' : ''} &bull; Paid ${formatCurrency(s.collected)}</p>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="text-right">
-                  <p class="text-sm font-bold text-gray-900">${formatCurrency(s.billed)}</p>
-                  <p class="text-[11px] font-semibold ${s.pending > 0 ? 'text-red-500' : 'text-emerald-600'}">
-                    ${s.pending > 0 ? `Due: ${formatCurrency(s.pending)}` : 'Settled'}
-                  </p>
-                </div>
-                ${ICONS.chevron}
-              </div>
-            </button>
-          `).join('');
-
       const routeEntries = Object.entries(routeStats);
       const routeReportHtml = routeEntries.length === 0
-        ? `<p class="text-xs text-gray-400 text-center py-3">No routes logged in this period.</p>`
+        ? `<p class="text-xs text-gray-400 text-center py-4">No routes logged in this period.</p>`
         : routeEntries.map(([rName, s]) => `
-            <button onclick="openRouteDrilldown('${rName.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 rounded-lg px-1 transition">
-              <div>
-                <p class="text-sm font-bold text-gray-900">${rName}</p>
+            <button onclick="openRouteDrilldown('${rName.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 hover:bg-gray-50 rounded-lg px-1.5 transition gap-2">
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-gray-900 truncate">${escapeHtml(rName)}</p>
                 <p class="text-[11px] text-gray-500 mt-0.5">${s.trips} trip${s.trips > 1 ? 's' : ''} &bull; Tolls ${formatCurrency(s.tolls)}</p>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 shrink-0">
                 <div class="text-right">
                   <p class="text-sm font-bold text-gray-900">${formatCurrency(s.collected)}</p>
                   <p class="text-[11px] text-gray-400">of ${formatCurrency(s.billed)}</p>
@@ -762,75 +953,238 @@
             </button>
           `).join('');
 
-      const dateEntries = Object.entries(dateStats).sort((a, b) => b[0].localeCompare(a[0]));
+      const dateEntries = Object.entries(dateStats)
+        .filter(([, s]) => s.trips > 0)
+        .sort((a, b) => b[0].localeCompare(a[0]));
       const dateReportHtml = dateEntries.length === 0
-        ? `<p class="text-xs text-gray-400 text-center py-3">No dates logged in this period.</p>`
+        ? `<p class="text-xs text-gray-400 text-center py-4">No ride dates logged in this period.</p>`
         : dateEntries.map(([dStr, s]) => `
-            <div class="py-2 border-b border-gray-100 last:border-0 flex items-center justify-between text-xs">
-              <div>
+            <div class="py-2.5 border-b border-gray-100 last:border-0 flex items-center justify-between text-xs gap-2">
+              <div class="min-w-0">
                 <span class="font-semibold text-gray-800">${formatDateDisplay(dStr)}</span>
                 <span class="text-gray-400 ml-1.5">(${s.trips} ride${s.trips > 1 ? 's' : ''})</span>
               </div>
-              <div class="font-bold text-gray-900">${formatCurrency(s.collected)} <span class="font-normal text-gray-400">/ ${formatCurrency(s.billed)}</span></div>
+              <div class="font-bold text-gray-900 shrink-0">${formatCurrency(s.collected)} <span class="font-normal text-gray-400">/ ${formatCurrency(s.billed)}</span></div>
             </div>
           `).join('');
 
       return `
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-          ${periodPills}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Hero Profit Card -->
+          <div class="lg:col-span-5 bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Net Profit (Paid - Costs - Tolls)</p>
+                <p class="text-3xl font-bold mt-1 ${netRecovery >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(netRecovery)}</p>
+              </div>
+              <span class="bg-white/10 text-gray-200 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0">${filteredRides.length} Rides</span>
+            </div>
+
+            <div class="bg-white/5 rounded-2xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-emerald-400 font-bold">Paid: ${formatCurrency(totalCollected)} (${paidPct}%)</span>
+                <span class="text-orange-400 font-bold">Due: ${formatCurrency(totalPending)}</span>
+              </div>
+              <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400 rounded-full" style="width: ${paidPct}%"></div>
+              </div>
+              <div class="flex flex-wrap justify-between text-[11px] text-gray-400 pt-1 gap-1">
+                <span>Billed: ${formatCurrency(totalBilled)}</span>
+                <span>Costs: ${formatCurrency(totalLoggedExpenses)} &bull; Tolls: ${formatCurrency(totalRideTolls)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Earnings vs Expenses Bar Chart -->
+          <div class="lg:col-span-7 bg-white rounded-3xl p-5 shadow-xs border border-gray-100">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Earnings vs. Costs Trend</h2>
+            </div>
+            ${financeChartHtml}
+          </div>
         </div>
 
-        <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl p-4 shadow-sm space-y-3">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Net Profit (Paid - Fuel - Tolls)</p>
-              <p class="text-3xl font-bold mt-1 ${netRecovery >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(netRecovery)}</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <section class="space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Pending Dues (${pendingItems.length})</h2>
             </div>
-            <span class="bg-white/10 text-gray-200 text-[11px] font-medium px-2.5 py-1 rounded-full">${filteredRides.length} Rides</span>
+            ${pendingHtml}
+          </section>
+
+          <div class="space-y-4">
+            <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+              <div class="flex items-center justify-between mb-1">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Route-Wise Breakdown</h2>
+                <span class="text-[10px] text-blue-600 font-semibold">Tap for details</span>
+              </div>
+              ${routeReportHtml}
+            </section>
+
+            <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Date-Wise Ledger</h2>
+              ${dateReportHtml}
+            </section>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRidersDashboard() {
+      const totalRidersCount = state.riders.length;
+      const newRidersInPeriod = state.riders.filter(r => isDateInPeriod(r.joinedDate, dashboardPeriod));
+
+      // Build Weekly New Riders Chart (Last 8 Weeks)
+      const weekBuckets = [];
+      const now = new Date();
+      for (let i = 7; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i * 7);
+        const wkStr = getWeekStartStr(d.toISOString().slice(0, 10));
+        if (!weekBuckets.some(b => b.weekStart === wkStr)) {
+          weekBuckets.push({ weekStart: wkStr, count: 0 });
+        }
+      }
+      state.riders.forEach(r => {
+        if (!r.joinedDate) return;
+        const wk = getWeekStartStr(r.joinedDate);
+        const bucket = weekBuckets.find(b => b.weekStart === wk);
+        if (bucket) bucket.count += 1;
+      });
+      const maxWeeklyNew = Math.max(1, ...weekBuckets.map(b => b.count));
+
+      const weeklyChartHtml = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-[11px] text-gray-500">
+            <span>New Riders Joined Per Week</span>
+            <span>Last ${weekBuckets.length} weeks</span>
+          </div>
+          <div class="grid grid-cols-${weekBuckets.length} gap-2 items-end h-36 pt-4 px-1 border-b border-gray-100">
+            ${weekBuckets.map(b => {
+              const barH = b.count > 0 ? Math.max(14, Math.round((b.count / maxWeeklyNew) * 100)) : 4;
+              return `
+                <div class="flex flex-col items-center gap-1 h-full justify-end">
+                  <span class="text-[10px] font-bold ${b.count > 0 ? 'text-blue-600' : 'text-gray-300'}">${b.count}</span>
+                  <div class="w-5 md:w-7 ${b.count > 0 ? 'bg-blue-600' : 'bg-gray-100'} rounded-t-md transition-all" style="height: ${barH}%"></div>
+                  <span class="text-[9px] text-gray-500 font-medium truncate max-w-full">${formatShortDate(b.weekStart)}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      // Aggregate rider stats across ALL rides (or period rides for earnings) while sorting Top Riders by total ride count
+      const riderLeaderboard = state.riders.map(r => {
+        let totalRides = 0;
+        let periodRides = 0;
+        let billed = 0;
+        let collected = 0;
+        let pending = 0;
+
+        state.rides.forEach(ride => {
+          ride.passengers.forEach(p => {
+            if (p.riderId === r.id || p.name === r.name) {
+              totalRides += 1;
+              if (isDateInPeriod(ride.date, dashboardPeriod)) {
+                periodRides += 1;
+                const fare = Number(p.fare) || 0;
+                const paid = p.paid ? (Number(p.paidAmount) || fare) : (Number(p.paidAmount) || 0);
+                billed += fare;
+                collected += paid;
+                pending += Math.max(0, fare - paid);
+              }
+            }
+          });
+        });
+
+        return {
+          ...r,
+          totalRides,
+          periodRides,
+          billed,
+          collected,
+          pending
+        };
+      }).sort((a, b) => b.totalRides - a.totalRides || b.billed - a.billed);
+
+      const newRidersListHtml = newRidersInPeriod.length === 0
+        ? `<p class="text-xs text-gray-400 text-center py-4">No new riders joined in this selected period.</p>`
+        : newRidersInPeriod.map(r => `
+            <div class="py-2.5 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2 text-xs">
+              <div class="min-w-0">
+                <p class="font-bold text-gray-900 truncate">${escapeHtml(r.name)} ${r.company ? `<span class="text-[10px] font-semibold text-indigo-600">(${escapeHtml(r.company)})</span>` : ''}</p>
+                <p class="text-[11px] text-gray-500 truncate">${escapeHtml(r.pickup)} ${ICONS.arrowRight} ${escapeHtml(r.drop)}</p>
+              </div>
+              <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg shrink-0">Joined ${formatDateDisplay(r.joinedDate)}</span>
+            </div>
+          `).join('');
+
+      const leaderboardHtml = riderLeaderboard.length === 0
+        ? `<p class="text-xs text-gray-400 text-center py-4">No riders in database yet.</p>`
+        : riderLeaderboard.map((r, idx) => `
+            <button onclick="openRiderDrilldown('${r.name.replace(/'/g, "\\'")}')" class="w-full text-left py-3 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-50 hover:bg-gray-50 rounded-lg px-1.5 transition gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${idx < 3 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}">#${idx + 1}</span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-bold text-gray-900 truncate">${escapeHtml(r.name)}</p>
+                    <span class="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full shrink-0">${r.totalRides} Ride${r.totalRides === 1 ? '' : 's'}</span>
+                  </div>
+                  <p class="text-[11px] text-gray-500 mt-0.5 truncate">${r.company ? escapeHtml(r.company) + ' &bull; ' : ''}Joined ${formatDateDisplay(r.joinedDate)}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="text-right">
+                  <p class="text-sm font-bold text-gray-900">${formatCurrency(r.billed)}</p>
+                  <p class="text-[11px] font-semibold ${r.pending > 0 ? 'text-red-500' : 'text-emerald-600'}">
+                    ${r.pending > 0 ? `Due: ${formatCurrency(r.pending)}` : 'Settled'}
+                  </p>
+                </div>
+                ${ICONS.chevron}
+              </div>
+            </button>
+          `).join('');
+
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Left KPI Cards -->
+          <div class="lg:col-span-5 grid grid-cols-2 gap-3">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl p-4 shadow-xs flex flex-col justify-between">
+              <p class="text-[11px] uppercase tracking-wider text-blue-100 font-semibold">Total Riders</p>
+              <p class="text-3xl font-bold my-2">${totalRidersCount}</p>
+              <p class="text-[11px] text-blue-100">Registered in Riders DB</p>
+            </div>
+            <div class="bg-white rounded-3xl p-4 shadow-xs border border-gray-100 flex flex-col justify-between">
+              <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">First-Time Riders</p>
+              <p class="text-3xl font-bold text-emerald-600 my-2">+${newRidersInPeriod.length}</p>
+              <p class="text-[11px] text-gray-500 capitalize">In selected ${dashboardPeriod}</p>
+            </div>
           </div>
 
-          <div class="bg-white/5 rounded-2xl p-3 space-y-2">
-            <div class="flex justify-between text-xs">
-              <span class="text-emerald-400 font-bold">Paid: ${formatCurrency(totalCollected)} (${paidPct}%)</span>
-              <span class="text-orange-400 font-bold">Due: ${formatCurrency(totalPending)}</span>
-            </div>
-            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-400 rounded-full" style="width: ${paidPct}%"></div>
-            </div>
-            <div class="flex justify-between text-[11px] text-gray-400 pt-0.5">
-              <span>Total Billed: ${formatCurrency(totalBilled)}</span>
-              <span>Fuel: ${formatCurrency(totalFuelCost)} &bull; Tolls: ${formatCurrency(totalTolls)}</span>
-            </div>
+          <!-- Weekly New Riders Chart -->
+          <div class="lg:col-span-7 bg-white rounded-3xl p-5 shadow-xs border border-gray-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Weekly Rider Growth</h2>
+            ${weeklyChartHtml}
           </div>
         </div>
 
-        <section class="space-y-2">
-          <div class="flex items-center justify-between px-1">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Pending Dues (${pendingItems.length})</h2>
-          </div>
-          ${pendingHtml}
-        </section>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Top Riders Leaderboard -->
+          <section class="lg:col-span-7 bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+            <div class="flex items-center justify-between mb-1">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Top Riders (Sorted by Ride Count)</h2>
+              <span class="text-[10px] text-blue-600 font-semibold">Tap rider for statement</span>
+            </div>
+            ${leaderboardHtml}
+          </section>
 
-        <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
-          <div class="flex items-center justify-between mb-1">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Rider-Wise Report</h2>
-            <span class="text-[10px] text-blue-600 font-semibold">Tap rider for history</span>
-          </div>
-          ${riderReportHtml}
-        </section>
-
-        <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
-          <div class="flex items-center justify-between mb-1">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Ride / Route-Wise Report</h2>
-            <span class="text-[10px] text-blue-600 font-semibold">Tap route for details</span>
-          </div>
-          ${routeReportHtml}
-        </section>
-
-        <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Date-Wise Ledger</h2>
-          ${dateReportHtml}
-        </section>
+          <!-- New Riders Joined in Period -->
+          <section class="lg:col-span-5 bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">First-Time Riders (${newRidersInPeriod.length})</h2>
+            ${newRidersListHtml}
+          </section>
+        </div>
       `;
     }
 
@@ -875,12 +1229,12 @@
       const waStatementUrl = buildWhatsAppUrl(phone, statementMsg);
 
       const tripRows = matchingTrips.map(t => `
-        <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
-          <div>
-            <p class="font-bold text-gray-900">${formatDateDisplay(t.date)} &bull; ${t.routeName}</p>
-            <p class="text-[11px] text-gray-500 mt-0.5">${t.pickup} ${ICONS.arrowRight} ${t.drop}</p>
+        <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-3 flex items-center justify-between text-xs gap-2">
+          <div class="min-w-0">
+            <p class="font-bold text-gray-900 truncate">${formatDateDisplay(t.date)} &bull; ${escapeHtml(t.routeName)}</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 truncate">${escapeHtml(t.pickup)} ${ICONS.arrowRight} ${escapeHtml(t.drop)}</p>
           </div>
-          <div class="text-right">
+          <div class="text-right shrink-0">
             <p class="font-bold text-gray-900">${formatCurrency(t.fare)}</p>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${t.due > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}">
               ${t.due > 0 ? `Due ${formatCurrency(t.due)}` : `Paid (${t.payMode})`}
@@ -891,16 +1245,17 @@
 
       openModal(`
         <div class="space-y-4">
-          <div class="flex items-start justify-between">
+          <div class="flex items-start justify-between gap-2">
             <div>
-              <h3 class="text-lg font-bold text-gray-900">${riderName}</h3>
+              <h3 class="text-lg font-bold text-gray-900">${escapeHtml(riderName)}</h3>
               <p class="text-xs text-gray-500">
-                ${riderProfile && riderProfile.company ? riderProfile.company + ' &bull; ' : ''}
+                ${riderProfile && riderProfile.company ? escapeHtml(riderProfile.company) + ' &bull; ' : ''}
                 ${phone ? '+' + phone : ''}
+                ${riderProfile && riderProfile.joinedDate ? ' &bull; Joined ' + formatDateDisplay(riderProfile.joinedDate) : ''}
               </p>
-              ${riderProfile && riderProfile.notes ? `<p class="text-[11px] text-blue-600 mt-0.5">${riderProfile.notes}</p>` : ''}
+              ${riderProfile && riderProfile.notes ? `<p class="text-[11px] text-blue-600 mt-0.5">${escapeHtml(riderProfile.notes)}</p>` : ''}
             </div>
-            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+            <button onclick="closeModal()" class="text-gray-400 p-1 shrink-0">${ICONS.close}</button>
           </div>
 
           <div class="grid grid-cols-3 gap-2 bg-gray-900 text-white rounded-2xl p-3 text-center">
@@ -956,7 +1311,7 @@
               <span>${formatDateDisplay(r.date)} (${formatTime12Hr(r.time)})</span>
               <span>${formatCurrency(paid)} / ${formatCurrency(billed)}</span>
             </div>
-            <p class="text-[11px] text-gray-500">Riders (${r.passengers.length}): ${names}</p>
+            <p class="text-[11px] text-gray-500">Riders (${r.passengers.length}): ${escapeHtml(names)}</p>
             <p class="text-[10px] text-gray-400">Status: ${r.status.toUpperCase()} &bull; Toll: ${formatCurrency(toll)}</p>
           </div>
         `;
@@ -964,12 +1319,12 @@
 
       openModal(`
         <div class="space-y-4">
-          <div class="flex items-start justify-between">
+          <div class="flex items-start justify-between gap-2">
             <div>
-              <h3 class="text-lg font-bold text-gray-900">${routeName}</h3>
+              <h3 class="text-lg font-bold text-gray-900">${escapeHtml(routeName)}</h3>
               <p class="text-xs text-gray-500">${matchingRides.length} Total Trips &bull; ${totalRiders} Passenger Seats Filled</p>
             </div>
-            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
+            <button onclick="closeModal()" class="text-gray-400 p-1 shrink-0">${ICONS.close}</button>
           </div>
 
           <div class="grid grid-cols-3 gap-2 bg-gray-900 text-white rounded-2xl p-3 text-center">
@@ -1007,26 +1362,55 @@
     }
 
     /*****************************************************************
-     * 8. RIDES TAB (SCHEDULE, EDIT ANY RIDE, ADMIN POST, UPDATES)
+     * 8. RIDES TAB (STATUS + DATE RANGE FILTER, SCHEDULE, DISPATCH)
      *****************************************************************/
-    function setRidesFilter(f) {
-      ridesFilter = f;
+    function setRidesStatusFilter(f) {
+      ridesStatusFilter = f;
+      renderApp();
+    }
+
+    function setRidesPeriodFilter(p) {
+      ridesPeriodFilter = p;
       renderApp();
     }
 
     function renderRides() {
       const sorted = [...state.rides].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
       const list = sorted.filter(r => {
-        if (ridesFilter === 'upcoming') return r.status === 'scheduled' || r.status === 'active';
-        if (ridesFilter === 'completed') return r.status === 'completed';
-        return true;
+        const statusMatch = ridesStatusFilter === 'upcoming'
+          ? (r.status === 'scheduled' || r.status === 'active')
+          : ridesStatusFilter === 'completed'
+            ? r.status === 'completed'
+            : true;
+        const periodMatch = isDateInPeriod(r.date, ridesPeriodFilter);
+        return statusMatch && periodMatch;
       });
 
+      const ridePeriodOptions = [
+        { id: 'all', label: 'All Dates' },
+        { id: 'today', label: 'Today' },
+        { id: 'week', label: 'Week' },
+        { id: 'month', label: 'Month' },
+        { id: 'quarter', label: 'Quarter' },
+        { id: 'year', label: 'Year' }
+      ];
+
+      const periodPills = ridePeriodOptions.map(p => `
+        <button onclick="setRidesPeriodFilter('${p.id}')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${ridesPeriodFilter === p.id ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200/80 hover:bg-gray-50'}">
+          ${p.label}
+        </button>
+      `).join('');
+
       const filterBar = `
-        <div class="grid grid-cols-3 bg-gray-200/80 p-1 rounded-xl text-xs font-semibold">
-          <button onclick="setRidesFilter('upcoming')" class="py-1.5 rounded-lg transition ${ridesFilter === 'upcoming' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Active &amp; Next</button>
-          <button onclick="setRidesFilter('completed')" class="py-1.5 rounded-lg transition ${ridesFilter === 'completed' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Completed</button>
-          <button onclick="setRidesFilter('all')" class="py-1.5 rounded-lg transition ${ridesFilter === 'all' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">All (${state.rides.length})</button>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+          <div class="grid grid-cols-3 bg-gray-200/80 p-1 rounded-xl text-xs font-semibold w-full md:w-80">
+            <button onclick="setRidesStatusFilter('upcoming')" class="py-1.5 rounded-lg transition ${ridesStatusFilter === 'upcoming' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Active &amp; Next</button>
+            <button onclick="setRidesStatusFilter('completed')" class="py-1.5 rounded-lg transition ${ridesStatusFilter === 'completed' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Completed</button>
+            <button onclick="setRidesStatusFilter('all')" class="py-1.5 rounded-lg transition ${ridesStatusFilter === 'all' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">All (${state.rides.length})</button>
+          </div>
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            ${periodPills}
+          </div>
         </div>
       `;
 
@@ -1034,8 +1418,8 @@
         return `
           ${filterBar}
           <div class="bg-white rounded-2xl p-8 text-center border border-gray-100 space-y-2">
-            <p class="text-sm font-semibold text-gray-700">No rides found in this view</p>
-            <p class="text-xs text-gray-400">Tap "+ Schedule" at the top right to schedule a ride or log a past trip.</p>
+            <p class="text-sm font-semibold text-gray-700">No rides found for this filter</p>
+            <p class="text-xs text-gray-400">Try switching the date range above or tap "+ Schedule" to create a ride.</p>
           </div>
         `;
       }
@@ -1060,12 +1444,12 @@
         const passengerRows = ride.passengers.length === 0
           ? `<div class="py-3 text-center text-xs text-gray-400 border-t border-gray-50">No riders added yet &bull; <button onclick="openRideFormModal('${ride.id}')" class="text-blue-600 font-semibold underline">+ Add Riders</button></div>`
           : ride.passengers.map(p => `
-              <div class="flex items-center justify-between py-1.5 text-xs border-t border-gray-50">
-                <div>
-                  <span class="font-semibold text-gray-800">${p.name}</span>
-                  <span class="text-gray-400 block text-[11px]">${p.pickup} ${ICONS.arrowRight} ${p.drop}</span>
+              <div class="flex items-center justify-between py-1.5 text-xs border-t border-gray-50 gap-2">
+                <div class="min-w-0">
+                  <span class="font-semibold text-gray-800 block truncate">${escapeHtml(p.name)}</span>
+                  <span class="text-gray-400 block text-[11px] truncate">${escapeHtml(p.pickup)} ${ICONS.arrowRight} ${escapeHtml(p.drop)}</span>
                 </div>
-                <div class="text-right">
+                <div class="text-right shrink-0">
                   <span class="font-bold text-gray-900">${formatCurrency(p.fare)}</span>
                   ${ride.status === 'completed'
                     ? `<span class="block text-[10px] font-semibold ${p.paid && p.paidAmount >= p.fare ? 'text-emerald-600' : 'text-red-500'}">${p.paid && p.paidAmount >= p.fare ? 'Paid' : `Due ${formatCurrency(Math.max(0, p.fare - (p.paidAmount || 0)))}`}</span>`
@@ -1079,24 +1463,24 @@
           actionButtons = `
             <div class="space-y-2 pt-2 border-t border-gray-100">
               <div class="flex items-center gap-2">
-                <button onclick="startRide('${ride.id}')" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-                  ${ICONS.play} Start Ride &amp; Notify
+                <button onclick="startRide('${ride.id}')" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white text-xs font-semibold py-2.5 px-2 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                  ${ICONS.play} <span>Start &amp; Notify</span>
                 </button>
-                <button onclick="openAdminPostModal('${ride.id}')" class="bg-indigo-50 active:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-2.5 rounded-xl">
+                <button onclick="openAdminPostModal('${ride.id}')" class="bg-indigo-50 active:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold px-3 py-2.5 rounded-xl shrink-0">
                   Admin Post
                 </button>
               </div>
               <div class="flex items-center gap-1.5">
-                <button onclick="openRideFormModal('${ride.id}')" class="flex-1 bg-gray-100 active:bg-gray-200 text-gray-800 text-[11px] font-semibold py-2 rounded-xl flex items-center justify-center gap-1">
-                  ${ICONS.edit} Edit / Riders
+                <button onclick="openRideFormModal('${ride.id}')" class="flex-1 bg-gray-100 active:bg-gray-200 text-gray-800 text-[11px] font-semibold py-2 px-2 rounded-xl flex items-center justify-center gap-1">
+                  ${ICONS.edit} <span>Edit</span>
                 </button>
-                <button onclick="openRideUpdatesModal('${ride.id}')" class="flex-1 bg-amber-50 active:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold py-2 rounded-xl">
-                  Time / Cancel Msg
+                <button onclick="openRideUpdatesModal('${ride.id}')" class="flex-1 bg-amber-50 active:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold py-2 px-2 rounded-xl">
+                  Updates
                 </button>
-                <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-[11px] font-semibold px-2.5 py-2 rounded-xl">
+                <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-[11px] font-semibold px-2.5 py-2 rounded-xl shrink-0">
                   Repeat
                 </button>
-                <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete">
+                <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center shrink-0" aria-label="Delete">
                   ${ICONS.trash}
                 </button>
               </div>
@@ -1104,31 +1488,31 @@
           `;
         } else if (ride.status === 'active') {
           actionButtons = `
-            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
-              <button onclick="openLiveLocationModal('${ride.id}')" class="flex-1 bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-                ${ICONS.pin} Live Location
+            <div class="flex items-center gap-1.5 pt-2 border-t border-gray-100">
+              <button onclick="openLiveLocationModal('${ride.id}')" class="flex-1 bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 px-2 rounded-xl shadow-xs flex items-center justify-center gap-1">
+                ${ICONS.pin} <span>Live Map</span>
               </button>
-              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-3 py-2.5 rounded-xl">
+              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-2.5 rounded-xl shrink-0">
                 Edit
               </button>
-              <button onclick="endRide('${ride.id}')" class="flex-1 bg-gray-900 active:bg-gray-800 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
-                ${ICONS.stop} End &amp; Settle
+              <button onclick="endRide('${ride.id}')" class="flex-1 bg-gray-900 active:bg-gray-800 text-white text-xs font-semibold py-2.5 px-2 rounded-xl shadow-xs flex items-center justify-center gap-1">
+                ${ICONS.stop} <span>End &amp; Settle</span>
               </button>
             </div>
           `;
         } else {
           actionButtons = `
             <div class="flex items-center gap-1.5 pt-2 border-t border-gray-100">
-              <button onclick="openSettlementModal('${ride.id}')" class="flex-1 bg-blue-50 active:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-1">
-                ${ICONS.check} Payments (${formatCurrency(totalPaid)}/${formatCurrency(totalFare)})
+              <button onclick="openSettlementModal('${ride.id}')" class="flex-1 bg-blue-50 active:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold py-2 px-2 rounded-xl flex items-center justify-center gap-1 truncate">
+                ${ICONS.check} <span>${formatCurrency(totalPaid)}/${formatCurrency(totalFare)}</span>
               </button>
-              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-2 rounded-xl">
+              <button onclick="openRideFormModal('${ride.id}')" class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-2 rounded-xl shrink-0">
                 Edit
               </button>
-              <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-2 rounded-xl">
+              <button onclick="cloneRide('${ride.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-2 rounded-xl shrink-0">
                 Repeat
               </button>
-              <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete">
+              <button onclick="deleteRide('${ride.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center shrink-0" aria-label="Delete">
                 ${ICONS.trash}
               </button>
             </div>
@@ -1136,20 +1520,22 @@
         }
 
         return `
-          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
-            <div class="flex items-start justify-between">
-              <div>
-                <h3 class="font-bold text-base text-gray-900">${ride.routeName}</h3>
-                <p class="text-xs text-gray-500 mt-0.5">${formatDateDisplay(ride.date)} at ${formatTime12Hr(ride.time)}</p>
-                <p class="text-[11px] text-gray-400 mt-0.5">
-                  Seats: ${ride.passengers.length}/${capacity} (${seatsLeft} avail) &bull; Toll: ${formatCurrency(ride.tollCost || 0)}
-                </p>
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 flex flex-col justify-between space-y-2.5">
+            <div class="space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <h3 class="font-bold text-base text-gray-900 truncate">${escapeHtml(ride.routeName)}</h3>
+                  <p class="text-xs text-gray-500 mt-0.5">${formatDateDisplay(ride.date)} at ${formatTime12Hr(ride.time)}</p>
+                  <p class="text-[11px] text-gray-400 mt-0.5">
+                    Seats: ${ride.passengers.length}/${capacity} (${seatsLeft} avail) &bull; Toll: ${formatCurrency(ride.tollCost || 0)}
+                  </p>
+                </div>
+                <span class="text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${badgeClass}">${badgeText}</span>
               </div>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${badgeClass}">${badgeText}</span>
-            </div>
 
-            <div class="space-y-0.5">
-              ${passengerRows}
+              <div class="space-y-0.5">
+                ${passengerRows}
+              </div>
             </div>
 
             ${actionButtons}
@@ -1157,7 +1543,7 @@
         `;
       }).join('');
 
-      return `${filterBar}<div class="space-y-3">${cards}</div>`;
+      return `${filterBar}<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">${cards}</div>`;
     }
 
     function startRide(rideId) {
@@ -1168,7 +1554,7 @@
       if (ride.passengers.length > 0) {
         initSingleButtonDispatch(rideId, 'start');
       } else {
-        showToast('Ride started!');
+        showToast('Ride started! (No riders added yet)');
       }
     }
 
@@ -1207,7 +1593,7 @@
         }))
       };
       state.rides.unshift(cloned);
-      ridesFilter = 'upcoming';
+      ridesStatusFilter = 'upcoming';
       saveState();
       showToast(`Repeated "${orig.routeName}" for today!`);
     }
@@ -1220,7 +1606,7 @@
     }
 
     /*****************************************************************
-     * 9. WHATSAPP ADMIN SEAT POST, RIDE UPDATES & SINGLE-BUTTON QUEUE
+     * 9. WHATSAPP + IPHONE SHORTCUT BATCH DISPATCH & ADMIN SEAT POST
      *****************************************************************/
     function openAdminPostModal(rideId) {
       const ride = state.rides.find(r => r.id === rideId);
@@ -1263,9 +1649,9 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <textarea id="adminPostTextarea" rows="13" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-mono leading-relaxed">${postText}</textarea>
+          <textarea id="adminPostTextarea" rows="12" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3 text-xs font-mono leading-relaxed">${postText}</textarea>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <button onclick="copyAdminPostText()" class="bg-gray-100 active:bg-gray-200 text-gray-800 text-xs font-bold py-3 rounded-2xl">
               Copy Post Text
             </button>
@@ -1305,7 +1691,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
 
           <button onclick="initSingleButtonDispatch('${ride.id}', 'timeUpdate')" class="w-full text-left bg-blue-50 active:bg-blue-100 border border-blue-200 rounded-2xl p-3.5 space-y-1">
             <p class="text-sm font-bold text-blue-900">1. Ride Time Updated (${formatTime12Hr(ride.time)})</p>
-            <p class="text-[11px] text-blue-700">Sends your updated start time message to all riders.</p>
+            <p class="text-[11px] text-blue-700">Auto-send or queue the updated start time to all riders.</p>
           </button>
 
           <button onclick="initSingleButtonDispatch('${ride.id}', 'cancelled')" class="w-full text-left bg-red-50 active:bg-red-100 border border-red-200 rounded-2xl p-3.5 space-y-1">
@@ -1317,7 +1703,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
             <p class="text-sm font-bold text-gray-900">3. Custom Quick Note</p>
             <input type="text" id="customRideNoteInput" placeholder="e.g. Stuck in traffic, running 10 mins late" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs">
             <button onclick="sendCustomNoteToRiders('${ride.id}')" class="w-full bg-gray-900 text-white text-xs font-bold py-2.5 rounded-xl">
-              Send Custom Note to All
+              Prepare Custom Note for All
             </button>
           </div>
         </div>
@@ -1354,12 +1740,12 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       const currentPassenger = isDone ? ride.passengers[total - 1] : ride.passengers[idx];
 
       const titles = {
-        start: 'Notify All Riders (Ride Started)',
-        end: 'Send Thank You to All Riders',
-        location: 'Send Live Location to All Riders',
-        timeUpdate: 'Send Time Update to All Riders',
-        cancelled: 'Send Cancellation to All Riders',
-        custom: 'Send Custom Update to All Riders'
+        start: 'Notify Riders (Ride Started)',
+        end: 'Send Thank You to Riders',
+        location: 'Send Live Location to Riders',
+        timeUpdate: 'Send Time Update to Riders',
+        cancelled: 'Send Cancellation to Riders',
+        custom: 'Send Custom Update to Riders'
       };
 
       const buildMsgForPassenger = (p) => {
@@ -1380,6 +1766,15 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         return `Hi ${p.name}, follow my live moving location for ${ride.routeName} here: ${batchQueue.extraLink}`;
       };
 
+      // Build iPhone Shortcut JSON payload for ALL riders at once
+      const shortcutBatchItems = ride.passengers
+        .filter(p => p.phone)
+        .map(p => ({
+          phone: normalizePhonePlus(p.phone),
+          msg: buildMsgForPassenger(p)
+        }));
+      const shortcutUrl = buildShortcutBatchUrl(shortcutBatchItems);
+
       const previewMsg = buildMsgForPassenger(currentPassenger);
       const waUrl = buildWhatsAppUrl(currentPassenger.phone, previewMsg);
 
@@ -1397,7 +1792,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         let style = 'bg-gray-100 text-gray-500';
         if (i < idx) style = 'bg-emerald-100 text-emerald-700 font-bold';
         else if (i === idx && !isDone) style = 'bg-blue-600 text-white font-bold';
-        return `<span class="text-[11px] px-2.5 py-1 rounded-full ${style}">${i < idx ? 'Sent: ' : ''}${p.name.split(' ')[0]}</span>`;
+        return `<span class="text-[11px] px-2.5 py-1 rounded-full ${style}">${i < idx ? 'Sent: ' : ''}${escapeHtml(p.name.split(' ')[0])}</span>`;
       }).join('');
 
       openModal(`
@@ -1407,27 +1802,41 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div class="flex flex-wrap gap-1.5">
-            ${progressPills}
-          </div>
-
-          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-1.5">
-            <p class="text-[11px] font-semibold text-gray-500 uppercase">Message Preview (${isDone ? 'All Sent' : `Rider ${idx + 1} of ${total}: ${currentPassenger.name}`})</p>
-            <p class="text-xs text-gray-800 bg-white p-2.5 rounded-xl border border-gray-100 select-all">${previewMsg}</p>
-          </div>
-
-          ${!isDone ? `
-            <a href="${waUrl}" target="_blank" rel="noopener noreferrer" onclick="advanceSingleButtonQueue()" class="w-full bg-emerald-600 active:bg-emerald-700 text-white text-sm font-bold py-3.5 rounded-2xl shadow-sm flex items-center justify-center gap-2">
-              ${ICONS.send} Send to ${currentPassenger.name} (${idx + 1}/${total})
+          <!-- PRIMARY: 1-Tap iPhone Shortcut Auto-Send -->
+          <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-800">iPhone Auto-Send (All ${total} Riders)</span>
+              <span class="text-[10px] font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Shortcut: CarpoolNotify</span>
+            </div>
+            <a href="${shortcutUrl}" class="w-full bg-indigo-600 active:bg-indigo-700 text-white text-sm font-bold py-3 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+              ${ICONS.bolt} Auto-Send All via iPhone Shortcut
             </a>
-          ` : `
-            <button onclick="closeModal()" class="w-full bg-gray-900 text-white text-sm font-bold py-3.5 rounded-2xl">
-              All ${total} Riders Notified &mdash; Done
-            </button>
-          `}
+            <p class="text-[10px] text-indigo-700 leading-snug">Sends personalized WhatsApp messages to all ${total} saved contacts automatically. <button type="button" onclick="closeModal(); switchTab('setup'); setSetupSubTab('templates');" class="underline font-semibold">View Shortcut setup</button></p>
+          </div>
+
+          <!-- FALLBACK: Step-by-Step Manual Queue (Android / Desktop / Unsaved Numbers) -->
+          <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <p class="text-[11px] font-semibold text-gray-500 uppercase">Manual Fallback (${isDone ? 'All Sent' : `Rider ${idx + 1} of ${total}: ${escapeHtml(currentPassenger.name)}`})</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${progressPills}
+            </div>
+            <p class="text-xs text-gray-800 bg-white p-2.5 rounded-xl border border-gray-100 select-all">${escapeHtml(previewMsg)}</p>
+
+            ${!isDone ? `
+              <a href="${waUrl}" target="_blank" rel="noopener noreferrer" onclick="advanceSingleButtonQueue()" class="w-full bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-3 rounded-xl shadow-xs flex items-center justify-center gap-1.5">
+                ${ICONS.send} Manual Send to ${escapeHtml(currentPassenger.name)} (${idx + 1}/${total})
+              </a>
+            ` : `
+              <button onclick="closeModal()" class="w-full bg-gray-900 text-white text-xs font-bold py-3 rounded-xl">
+                All ${total} Riders Notified &mdash; Done
+              </button>
+            `}
+          </div>
 
           ${groupShareUrl ? `
-            <div class="pt-1 border-t border-gray-100 text-center">
+            <div class="text-center">
               <a href="${groupShareUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-blue-600">
                 Or pick your Carpool WhatsApp Group to send once &rarr;
               </a>
@@ -1457,8 +1866,8 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
 
           <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2.5">
             <p class="text-xs font-bold text-gray-900">Option 1: Google / Apple Maps Live Trip Link</p>
-            <p class="text-[11px] text-gray-500">1. Start navigation in Google Maps or Apple Maps &rarr; tap <strong>Share Trip Progress</strong> &rarr; Copy Link.<br>2. Paste below to send your real-time moving route to all riders:</p>
-            <input type="url" id="liveTripUrlInput" value="${ride.liveMapLink || ''}" placeholder="Paste maps.app.goo.gl/... live link here" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            <p class="text-[11px] text-gray-500">1. Start navigation in Google Maps or Apple Maps &rarr; tap <strong>Share Trip Progress</strong> &rarr; Copy Link.<br>2. Paste below to auto-send your real-time moving route to all riders:</p>
+            <input type="url" id="liveTripUrlInput" value="${escapeHtml(ride.liveMapLink || '')}" placeholder="Paste maps.app.goo.gl/... live link here" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs">
             <button onclick="sendPastedLiveLink('${ride.id}')" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-xs">
               Send Live Trip Link to All Riders
             </button>
@@ -1466,7 +1875,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
 
           <div class="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 space-y-2">
             <p class="text-xs font-bold text-gray-900">Option 2: WhatsApp Native Live Location</p>
-            <p class="text-[11px] text-gray-500">Opens WhatsApp directly so you can tap <strong>+ &rarr; Location &rarr; Share Live Location</strong> inside your chat:</p>
+            <p class="text-[11px] text-gray-500">Opens WhatsApp directly so you can tap <strong>+ &rarr; Location &rarr; Share Live Location</strong> inside your group/chat:</p>
             <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="w-full bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5">
               Open WhatsApp App
             </a>
@@ -1489,7 +1898,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 10. UNIFIED RIDE SCHEDULER / EDITOR
+     * 10. UNIFIED RIDE SCHEDULER / EDITOR (SEARCHABLE + FREQUENT RIDER SORT + OVERLAP-FREE)
      *****************************************************************/
     function openModal(html) {
       document.getElementById('modalContent').innerHTML = html;
@@ -1516,18 +1925,28 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         <option value="${rt.id}"
           data-time="${rt.defaultTime}"
           data-toll="${rt.defaultToll || 0}"
-          data-from="${rt.fromPoint || ''}"
-          data-to="${rt.toPoint || ''}"
+          data-from="${escapeHtml(rt.fromPoint || '')}"
+          data-to="${escapeHtml(rt.toPoint || '')}"
           data-cap="${rt.capacity || 4}"
           data-return="${rt.isReturn ? '1' : '0'}"
           ${defaultRoute && rt.id === defaultRoute.id ? 'selected' : ''}>
-          ${rt.name} ${rt.isReturn ? '(Return Swap)' : ''}
+          ${escapeHtml(rt.name)} ${rt.isReturn ? '(Return Swap)' : ''}
         </option>
       `).join('');
 
-      const riderCheckboxes = state.riders.map(r => {
+      // Sort riders by ride frequency (most frequent first), then already-selected, then name
+      const freqMap = getRiderRideFrequencyMap();
+      const sortedRiders = [...state.riders].sort((a, b) => {
+        const aFreq = freqMap[a.id] || freqMap['name:' + a.name] || 0;
+        const bFreq = freqMap[b.id] || freqMap['name:' + b.name] || 0;
+        if (bFreq !== aFreq) return bFreq - aFreq;
+        return a.name.localeCompare(b.name);
+      });
+
+      const riderCheckboxes = sortedRiders.map(r => {
         const existingP = existing ? existing.passengers.find(p => p.riderId === r.id) : null;
         const isChecked = !!existingP;
+        const rideCount = freqMap[r.id] || freqMap['name:' + r.name] || 0;
 
         const autoSwap = !existing && defaultRoute && defaultRoute.isReturn;
         const initPickup = existingP ? existingP.pickup : (autoSwap ? r.drop : r.pickup);
@@ -1537,39 +1956,45 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         const initPaidAmt = existingP ? existingP.paidAmount : r.defaultFare;
         const initPayMode = existingP ? (existingP.payMode || 'UPI') : 'UPI';
 
+        const searchTokens = `${r.name} ${r.company || ''} ${initPickup} ${initDrop}`.toLowerCase();
+
         return `
-          <div class="border border-gray-200 rounded-2xl p-3 space-y-2 bg-gray-50/60">
-            <div class="flex items-center justify-between">
-              <label class="flex items-center gap-2.5 cursor-pointer flex-1">
-                <input type="checkbox" class="sched-rider-cb w-5 h-5 rounded accent-blue-600" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="toggleRiderOverride('${r.id}', this.checked)">
-                <div>
-                  <p class="text-sm font-bold text-gray-900">${r.name} ${r.company ? `<span class="text-[10px] font-normal text-gray-500">(${r.company})</span>` : ''}</p>
-                  <p class="text-[11px] text-gray-500">${initPickup} ${ICONS.arrowRight} ${initDrop}</p>
+          <div class="sched-rider-card border border-gray-200 rounded-2xl p-3 space-y-2 bg-gray-50/70" data-search="${escapeHtml(searchTokens)}">
+            <div class="flex items-center justify-between gap-2">
+              <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                <input type="checkbox" class="sched-rider-cb w-5 h-5 rounded accent-blue-600 shrink-0" value="${r.id}" ${isChecked ? 'checked' : ''} onchange="toggleRiderOverride('${r.id}', this.checked)">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <p class="text-sm font-bold text-gray-900 truncate">${escapeHtml(r.name)}</p>
+                    ${rideCount > 0 ? `<span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full shrink-0">${EMOJI.star} ${rideCount} ride${rideCount > 1 ? 's' : ''}</span>` : ''}
+                    ${r.company ? `<span class="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded shrink-0">${escapeHtml(r.company)}</span>` : ''}
+                  </div>
+                  <p class="text-[11px] text-gray-500 truncate mt-0.5">${escapeHtml(initPickup)} ${ICONS.arrowRight} ${escapeHtml(initDrop)}</p>
                 </div>
               </label>
-              <span class="text-xs font-bold text-blue-600">${formatCurrency(initFare)}</span>
+              <span class="text-xs font-bold text-blue-600 shrink-0">${formatCurrency(initFare)}</span>
             </div>
 
             <div id="override_${r.id}" class="${isChecked ? '' : 'hidden'} space-y-2 pt-2 border-t border-gray-200/80">
               <div class="flex items-center gap-1.5">
-                <input type="text" id="ov_pickup_${r.id}" value="${initPickup}" class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Pickup">
-                <button type="button" onclick="swapSingleRiderPoints('${r.id}')" class="bg-gray-200 text-gray-700 p-1 rounded-lg" title="Swap Pickup & Drop">${ICONS.swap}</button>
-                <input type="text" id="ov_drop_${r.id}" value="${initDrop}" class="flex-1 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" placeholder="Drop">
+                <input type="text" id="ov_pickup_${r.id}" value="${escapeHtml(initPickup)}" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs" placeholder="Pickup">
+                <button type="button" onclick="swapSingleRiderPoints('${r.id}')" class="bg-gray-200 text-gray-700 p-1.5 rounded-lg shrink-0" title="Swap Pickup & Drop">${ICONS.swap}</button>
+                <input type="text" id="ov_drop_${r.id}" value="${escapeHtml(initDrop)}" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs" placeholder="Drop">
               </div>
-              <div class="grid grid-cols-3 gap-1.5 items-center">
-                <div>
-                  <span class="text-[9px] text-gray-400 uppercase block">Fare (${RS})</span>
-                  <input type="number" id="ov_fare_${r.id}" value="${initFare}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-bold">
+              <div class="grid grid-cols-3 gap-2 items-center">
+                <div class="min-w-0">
+                  <span class="text-[10px] text-gray-500 uppercase block mb-0.5">Fare (${RS})</span>
+                  <input type="number" id="ov_fare_${r.id}" value="${initFare}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold">
                 </div>
-                <div>
-                  <span class="text-[9px] text-gray-400 uppercase block">Paid?</span>
-                  <label class="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-semibold">
+                <div class="min-w-0">
+                  <span class="text-[10px] text-gray-500 uppercase block mb-0.5">Paid?</span>
+                  <label class="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold cursor-pointer">
                     <input type="checkbox" id="ov_paid_${r.id}" ${initPaid ? 'checked' : ''} class="accent-emerald-600"> Paid
                   </label>
                 </div>
-                <div>
-                  <span class="text-[9px] text-gray-400 uppercase block">Paid Amt</span>
-                  <input type="number" id="ov_paidamt_${r.id}" value="${initPaidAmt}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]">
+                <div class="min-w-0">
+                  <span class="text-[10px] text-gray-500 uppercase block mb-0.5">Paid Amt</span>
+                  <input type="number" id="ov_paidamt_${r.id}" value="${initPaidAmt}" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs">
                 </div>
               </div>
               <input type="hidden" id="ov_paymode_${r.id}" value="${initPayMode}">
@@ -1586,22 +2011,23 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       const selectedCount = existing ? existing.passengers.length : 0;
 
       openModal(`
-        <div class="space-y-3.5">
+        <div class="space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold">${existing ? 'Edit / Manage Ride' : 'Schedule or Log Ride'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <!-- Row 1: Route & Status (2 Clean Columns) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Name / Route</label>
-              <select id="schedRoute" onchange="onSchedRouteChange()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold outline-none">
+              <select id="schedRoute" onchange="onSchedRouteChange()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none">
                 ${routeOptions}
               </select>
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Status</label>
-              <select id="schedStatus" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-semibold outline-none">
+              <select id="schedStatus" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none">
                 <option value="scheduled" ${initStatus === 'scheduled' ? 'selected' : ''}>Scheduled (Upcoming)</option>
                 <option value="active" ${initStatus === 'active' ? 'selected' : ''}>In Progress</option>
                 <option value="completed" ${initStatus === 'completed' ? 'selected' : ''}>Completed (Past Ride)</option>
@@ -1609,50 +2035,80 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5">
-            <div class="flex-1">
-              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">From</label>
-              <input type="text" id="schedFrom" value="${initFrom}" placeholder="Origin" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs">
+          <!-- Row 2: From / Swap / To -->
+          <div class="flex items-end gap-2">
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">From</label>
+              <input type="text" id="schedFrom" value="${escapeHtml(initFrom)}" placeholder="Origin" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <button type="button" onclick="swapAllRidePoints()" class="mt-4 bg-blue-50 text-blue-600 border border-blue-200 p-2 rounded-xl" title="Swap From/To & All Riders">${ICONS.swap}</button>
-            <div class="flex-1">
-              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">To</label>
-              <input type="text" id="schedTo" value="${initTo}" placeholder="Destination" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Date</label>
-              <input type="date" id="schedDate" value="${existing ? existing.date : todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs">
-            </div>
-            <div>
-              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Start Time</label>
-              <input type="time" id="schedTime" value="${existing ? existing.time : defaultRoute.defaultTime}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs">
-            </div>
-            <div>
-              <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-0.5">Default Toll (${RS})</label>
-              <input type="number" id="schedToll" value="${initToll}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-1.5 text-xs font-bold">
+            <button type="button" onclick="swapAllRidePoints()" class="bg-blue-50 text-blue-600 border border-blue-200 p-2.5 rounded-xl shrink-0" title="Swap From/To & All Riders">${ICONS.swap}</button>
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">To</label>
+              <input type="text" id="schedTo" value="${escapeHtml(initTo)}" placeholder="Destination" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
 
-          <input type="hidden" id="schedCap" value="${initCap}">
+          <!-- Row 3: Date & Start Time (2 Clean Columns - Overlap Free on iOS) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Date</label>
+              <input type="date" id="schedDate" value="${existing ? existing.date : todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Start Time</label>
+              <input type="time" id="schedTime" value="${existing ? existing.time : defaultRoute.defaultTime}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+          </div>
 
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <label class="text-xs font-semibold text-gray-600">Riders (Optional now, add anytime)</label>
+          <!-- Row 4: Default Toll & Seat Capacity (2 Clean Columns) -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Default Toll (${RS})</label>
+              <input type="number" id="schedToll" value="${initToll}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold">
+            </div>
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Seat Capacity</label>
+              <input type="number" id="schedCap" value="${initCap}" onchange="updateSeatBadge()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold">
+            </div>
+          </div>
+
+          <!-- Row 5: Searchable Frequent Riders List -->
+          <div class="space-y-2 pt-1">
+            <div class="flex justify-between items-center">
+              <label class="text-xs font-semibold text-gray-700">Select Riders (Sorted by Frequency)</label>
               <span id="seatCounterBadge" class="text-[11px] font-bold text-blue-600">${selectedCount} / ${initCap} seats</span>
             </div>
-            <div class="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+
+            <div class="relative">
+              <span class="absolute left-3 top-2.5">${ICONS.search}</span>
+              <input type="text" id="schedRiderSearch" oninput="filterSchedRiders()" placeholder="Search rider name, company, pickup or drop..." class="w-full bg-gray-100 border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-xs outline-none focus:border-blue-500">
+            </div>
+
+            <div id="schedRidersList" class="space-y-2 max-h-56 overflow-y-auto pr-0.5">
               ${riderCheckboxes || '<p class="text-xs text-gray-400 text-center py-3">No riders in DB yet. You can still schedule now and add riders later.</p>'}
             </div>
           </div>
 
-          <button onclick="saveRideForm('${editRideId || ''}')" class="w-full bg-blue-600 active:bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow-sm">
+          <button onclick="saveRideForm('${editRideId || ''}')" class="w-full bg-blue-600 active:bg-blue-700 text-white text-sm font-semibold py-3 rounded-2xl shadow-sm">
             ${existing ? 'Update Ride Details' : 'Save Ride'}
           </button>
         </div>
       `);
+    }
+
+    function filterSchedRiders() {
+      const q = (document.getElementById('schedRiderSearch').value || '').toLowerCase().trim();
+      const cards = document.querySelectorAll('.sched-rider-card');
+      cards.forEach(card => {
+        const hay = card.dataset.search || '';
+        card.style.display = !q || hay.includes(q) ? '' : 'none';
+      });
+    }
+
+    function updateSeatBadge() {
+      const count = document.querySelectorAll('.sched-rider-cb:checked').length;
+      const cap = document.getElementById('schedCap').value || 4;
+      document.getElementById('seatCounterBadge').textContent = `${count} / ${cap} seats`;
     }
 
     function onSchedRouteChange() {
@@ -1664,6 +2120,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       document.getElementById('schedFrom').value = opt.dataset.from || '';
       document.getElementById('schedTo').value = opt.dataset.to || '';
       document.getElementById('schedCap').value = opt.dataset.cap || '4';
+      updateSeatBadge();
 
       const isReturn = opt.dataset.return === '1';
       state.riders.forEach(r => {
@@ -1702,10 +2159,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       const box = document.getElementById(`override_${riderId}`);
       if (checked) box.classList.remove('hidden');
       else box.classList.add('hidden');
-
-      const count = document.querySelectorAll('.sched-rider-cb:checked').length;
-      const cap = document.getElementById('schedCap').value || 4;
-      document.getElementById('seatCounterBadge').textContent = `${count} / ${cap} seats`;
+      updateSeatBadge();
     }
 
     function saveRideForm(editRideId) {
@@ -1775,7 +2229,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
           liveMapLink: '',
           passengers
         });
-        ridesFilter = status === 'completed' ? 'completed' : 'upcoming';
+        ridesStatusFilter = status === 'completed' ? 'completed' : 'upcoming';
         showToast(status === 'completed' ? 'Past ride logged!' : 'Ride scheduled!');
       }
 
@@ -1801,19 +2255,19 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
                   <label class="flex items-center gap-2.5 cursor-pointer">
                     <input type="checkbox" id="settle_paid_${idx}" ${p.paid ? 'checked' : ''} class="w-5 h-5 rounded accent-emerald-600">
                     <div>
-                      <p class="text-sm font-bold text-gray-900">${p.name}</p>
+                      <p class="text-sm font-bold text-gray-900">${escapeHtml(p.name)}</p>
                       <p class="text-[11px] text-gray-500">Default Fare: ${formatCurrency(p.fare)}</p>
                     </div>
                   </label>
                   <span class="text-xs font-semibold text-gray-500">Paid?</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                  <div>
-                    <label class="text-[10px] font-semibold text-gray-500 uppercase">Amount (${RS})</label>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                  <div class="min-w-0">
+                    <label class="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Amount (${RS})</label>
                     <input type="number" id="settle_amt_${idx}" value="${defaultVal}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm font-bold">
                   </div>
-                  <div>
-                    <label class="text-[10px] font-semibold text-gray-500 uppercase">Mode</label>
+                  <div class="min-w-0">
+                    <label class="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Mode</label>
                     <select id="settle_mode_${idx}" class="w-full bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 text-sm">
                       <option value="UPI" ${p.payMode === 'UPI' ? 'selected' : ''}>UPI</option>
                       <option value="Cash" ${p.payMode === 'Cash' ? 'selected' : ''}>Cash</option>
@@ -1830,22 +2284,22 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-lg font-bold">Ride Settlement &amp; Toll</h3>
-              <p class="text-xs text-gray-500">${ride.routeName} &bull; ${formatDateDisplay(ride.date)}</p>
+              <p class="text-xs text-gray-500">${escapeHtml(ride.routeName)} &bull; ${formatDateDisplay(ride.date)}</p>
             </div>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
           <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 flex items-center justify-between gap-3">
-            <div>
+            <div class="min-w-0">
               <p class="text-xs font-bold text-amber-900">Toll Charges Paid (${RS})</p>
               <p class="text-[10px] text-amber-700">Pre-filled from schedule (enter 0 if no toll)</p>
             </div>
-            <input type="number" id="settleTollInput" value="${ride.tollCost ?? 0}" class="w-24 bg-white border border-amber-300 rounded-xl px-2.5 py-2 text-sm font-bold text-right">
+            <input type="number" id="settleTollInput" value="${ride.tollCost ?? 0}" class="w-24 bg-white border border-amber-300 rounded-xl px-2.5 py-2 text-sm font-bold text-right shrink-0">
           </div>
 
           <div class="space-y-2.5 max-h-60 overflow-y-auto">${rows}</div>
 
-          <div class="grid grid-cols-2 gap-2 pt-1">
+          <div class="grid grid-cols-2 gap-2.5 pt-1">
             <button onclick="saveSettlement('${ride.id}', false)" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-2xl shadow-xs">
               Save Settlement
             </button>
@@ -1883,45 +2337,92 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 12. FUEL & ODOMETER LOG TAB
+     * 12. UNIFIED EXPENSES & FUEL TAB (EDITABLE + 3-WAY AUTO-CALC + OVERLAP FREE)
      *****************************************************************/
-    function renderFuel() {
-      const sorted = [...state.fuelLogs].sort((a, b) => a.odometer - b.odometer);
-      const totalSpent = sorted.reduce((s, f) => s + (Number(f.totalCost) || 0), 0);
-      const totalLiters = sorted.reduce((s, f) => s + (Number(f.liters) || 0), 0);
+    function setExpenseCategoryFilter(cat) {
+      expenseCategoryFilter = cat;
+      renderApp();
+    }
+
+    function renderExpenses() {
+      const allSorted = [...state.fuelLogs].sort((a, b) => (b.date + (b.odometer || 0)).localeCompare(a.date + (a.odometer || 0)));
+      const fuelOnlySorted = [...state.fuelLogs]
+        .filter(f => (f.category || 'Fuel') === 'Fuel' && Number(f.odometer) > 0)
+        .sort((a, b) => Number(a.odometer) - Number(b.odometer));
+
+      const totalSpentAll = allSorted.reduce((s, f) => s + (Number(f.totalCost) || 0), 0);
+      const totalFuelSpent = fuelOnlySorted.reduce((s, f) => s + (Number(f.totalCost) || 0), 0);
+      const totalOtherSpent = totalSpentAll - totalFuelSpent;
+      const totalLiters = fuelOnlySorted.reduce((s, f) => s + (Number(f.liters) || 0), 0);
 
       let totalDist = 0;
       let mileageStr = '--';
       let costPerKmStr = '--';
 
-      if (sorted.length >= 2) {
-        totalDist = sorted[sorted.length - 1].odometer - sorted[0].odometer;
-        const litersAfterFirst = sorted.slice(1).reduce((s, f) => s + (Number(f.liters) || 0), 0);
-        const costAfterFirst = sorted.slice(1).reduce((s, f) => s + (Number(f.totalCost) || 0), 0);
+      if (fuelOnlySorted.length >= 2) {
+        totalDist = Number(fuelOnlySorted[fuelOnlySorted.length - 1].odometer) - Number(fuelOnlySorted[0].odometer);
+        const litersAfterFirst = fuelOnlySorted.slice(1).reduce((s, f) => s + (Number(f.liters) || 0), 0);
+        const costAfterFirst = fuelOnlySorted.slice(1).reduce((s, f) => s + (Number(f.totalCost) || 0), 0);
         if (totalDist > 0 && litersAfterFirst > 0) {
           mileageStr = (totalDist / litersAfterFirst).toFixed(1) + ' km/L';
           costPerKmStr = RS + (costAfterFirst / totalDist).toFixed(2) + '/km';
         }
       }
 
-      const displayList = [...sorted].reverse().map((entry, idx, arr) => {
-        const prev = arr[idx + 1];
-        const dist = prev ? entry.odometer - prev.odometer : 0;
-        const tankMileage = dist > 0 && entry.liters > 0 ? (dist / entry.liters).toFixed(1) + ' km/L' : '';
-        const pricePerLiter = entry.liters > 0 ? (entry.totalCost / entry.liters).toFixed(1) : 0;
+      // Compute tank-to-tank distance map for fuel entries
+      const tankDistMap = {};
+      for (let i = 1; i < fuelOnlySorted.length; i++) {
+        const dist = Number(fuelOnlySorted[i].odometer) - Number(fuelOnlySorted[i - 1].odometer);
+        const kmpl = dist > 0 && fuelOnlySorted[i].liters > 0 ? (dist / fuelOnlySorted[i].liters).toFixed(1) : '';
+        tankDistMap[fuelOnlySorted[i].id] = { dist, kmpl };
+      }
+
+      const categories = ['all', 'Fuel', 'Toll', 'Maintenance', 'Car Wash', 'Parking', 'Other'];
+      const catPills = categories.map(c => `
+        <button onclick="setExpenseCategoryFilter('${c}')" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${expenseCategoryFilter === c ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 border border-gray-200/80 hover:bg-gray-50'}">
+          ${c === 'all' ? 'All Costs' : c}
+        </button>
+      `).join('');
+
+      const filteredList = allSorted.filter(entry =>
+        expenseCategoryFilter === 'all' ? true : (entry.category || 'Fuel') === expenseCategoryFilter
+      );
+
+      const catBadgeColors = {
+        Fuel: 'bg-blue-50 text-blue-700',
+        Toll: 'bg-amber-50 text-amber-700',
+        Maintenance: 'bg-purple-50 text-purple-700',
+        'Car Wash': 'bg-cyan-50 text-cyan-700',
+        Parking: 'bg-gray-100 text-gray-700',
+        Other: 'bg-rose-50 text-rose-700'
+      };
+
+      const displayList = filteredList.map(entry => {
+        const cat = entry.category || 'Fuel';
+        const isFuel = cat === 'Fuel';
+        const tankInfo = tankDistMap[entry.id];
+        const ppl = entry.pricePerLiter || (entry.liters > 0 ? (entry.totalCost / entry.liters).toFixed(2) : 0);
 
         return `
-          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-gray-900">${entry.odometer.toLocaleString()} km</span>
-                ${dist > 0 ? `<span class="text-[11px] bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-md">+${dist} km (${tankMileage})</span>` : ''}
+          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${catBadgeColors[cat] || 'bg-gray-100 text-gray-700'}">${escapeHtml(cat)}</span>
+                ${isFuel && entry.odometer ? `<span class="font-bold text-sm text-gray-900">${Number(entry.odometer).toLocaleString()} km</span>` : ''}
+                ${tankInfo && tankInfo.dist > 0 ? `<span class="text-[11px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-md">+${tankInfo.dist} km (${tankInfo.kmpl} km/L)</span>` : ''}
               </div>
-              <p class="text-xs text-gray-500 mt-0.5">${formatDateDisplay(entry.date)} &bull; ${entry.liters} L @ ${RS}${pricePerLiter}/L</p>
+              <p class="text-xs text-gray-500 mt-1">
+                ${formatDateDisplay(entry.date)}
+                ${isFuel && entry.liters ? ` &bull; ${entry.liters} L @ ${RS}${ppl}/L` : ''}
+                ${entry.notes ? ` &bull; ${escapeHtml(entry.notes)}` : ''}
+              </p>
             </div>
-            <div class="flex items-center gap-2.5">
-              <span class="font-bold text-sm text-gray-900">${formatCurrency(entry.totalCost)}</span>
-              <button onclick="deleteFuel('${entry.id}')" class="text-red-400 hover:text-red-600 p-1.5 rounded-lg" aria-label="Delete Fuel">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="font-bold text-sm text-gray-900 mr-1">${formatCurrency(entry.totalCost)}</span>
+              <button onclick="openExpenseModal('${entry.id}')" class="bg-gray-100 active:bg-gray-200 text-gray-700 p-2 rounded-xl" aria-label="Edit Expense">
+                ${ICONS.edit}
+              </button>
+              <button onclick="deleteExpense('${entry.id}')" class="bg-red-50 text-red-500 hover:text-red-600 p-2 rounded-xl" aria-label="Delete Expense">
                 ${ICONS.trash}
               </button>
             </div>
@@ -1930,108 +2431,239 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       }).join('');
 
       return `
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100">
-            <p class="text-[11px] font-semibold text-gray-400 uppercase">Avg Mileage</p>
-            <p class="text-xl font-bold text-emerald-600 mt-0.5">${mileageStr}</p>
-            <p class="text-[11px] text-gray-500 mt-0.5">Running: ${costPerKmStr}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+            <p class="text-[11px] font-semibold text-gray-400 uppercase">Total Vehicle Costs</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">${formatCurrency(totalSpentAll)}</p>
+            <p class="text-[11px] text-gray-500 mt-0.5">Fuel: ${formatCurrency(totalFuelSpent)} &bull; Other: ${formatCurrency(totalOtherSpent)}</p>
           </div>
-          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100">
-            <p class="text-[11px] font-semibold text-gray-400 uppercase">Total Fuel Cost</p>
-            <p class="text-xl font-bold text-gray-900 mt-0.5">${formatCurrency(totalSpent)}</p>
-            <p class="text-[11px] text-gray-500 mt-0.5">${totalLiters.toFixed(1)} L &bull; ${totalDist} km</p>
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+            <p class="text-[11px] font-semibold text-gray-400 uppercase">Avg Fuel Mileage</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-1">${mileageStr}</p>
+            <p class="text-[11px] text-gray-500 mt-0.5">Running Fuel Cost: ${costPerKmStr}</p>
+          </div>
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
+            <p class="text-[11px] font-semibold text-gray-400 uppercase">Fuel Volume &amp; Distance</p>
+            <p class="text-2xl font-bold text-blue-600 mt-1">${totalLiters.toFixed(1)} L</p>
+            <p class="text-[11px] text-gray-500 mt-0.5">Tracked Distance: ${totalDist.toLocaleString()} km</p>
           </div>
         </div>
 
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          ${catPills}
+        </div>
+
         <div class="space-y-2.5">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 px-1">Refuel History (${sorted.length})</h2>
-          ${displayList || '<p class="text-xs text-gray-400 text-center py-6 bg-white rounded-2xl">No fuel entries yet. Tap "+ Log Fuel" above.</p>'}
+          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 px-1">Expense &amp; Fuel History (${filteredList.length})</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${displayList || '<p class="md:col-span-2 text-xs text-gray-400 text-center py-8 bg-white rounded-2xl">No expenses logged in this category. Tap "+ Log Cost" above.</p>'}
+          </div>
         </div>
       `;
     }
 
-    function openFuelModal() {
+    function openExpenseModal(editId = null) {
+      const existing = editId ? state.fuelLogs.find(f => f.id === editId) : null;
       const lastOdo = state.fuelLogs.length > 0
         ? Math.max(...state.fuelLogs.map(f => Number(f.odometer) || 0))
         : '';
 
+      const initCat = existing ? (existing.category || 'Fuel') : 'Fuel';
+      const initDate = existing ? existing.date : todayStr();
+      const initOdo = existing ? (existing.odometer || '') : '';
+      const initPpl = existing ? (existing.pricePerLiter || '') : '';
+      const initLiters = existing ? (existing.liters || '') : '';
+      const initCost = existing ? (existing.totalCost || '') : '';
+      const initNotes = existing ? (existing.notes || '') : '';
+
+      fuelCalcHistory = ['price', 'liters'];
+
+      const catOptions = ['Fuel', 'Toll', 'Maintenance', 'Car Wash', 'Parking', 'Other'].map(c =>
+        `<option value="${c}" ${initCat === c ? 'selected' : ''}>${c}</option>`
+      ).join('');
+
       openModal(`
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-bold">Log Fuel &amp; Odometer</h3>
+            <h3 class="text-lg font-bold">${existing ? 'Edit Expense / Fuel Log' : 'Log Fuel or Vehicle Cost'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
+          <!-- Row 1: Category & Date (Clean 2-Column Layout - No iOS Overlap) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Expense Category</label>
+              <select id="expCategory" onchange="onExpenseCategoryChange()" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold">
+                ${catOptions}
+              </select>
+            </div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Date</label>
-              <input type="date" id="fuelDate" value="${todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Odometer (km)</label>
-              <input type="number" id="fuelOdo" placeholder="${lastOdo ? 'Last: ' + lastOdo : 'e.g. 43100'}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold">
+              <input type="date" id="expDate" value="${initDate}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Fuel Liters (L)</label>
-              <input type="number" step="0.01" id="fuelLiters" placeholder="e.g. 25.5" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <!-- Fuel-Specific Fields (Odometer, Price/L, Liters) -->
+          <div id="fuelFieldsSection" class="${initCat === 'Fuel' ? '' : 'hidden'} space-y-3 bg-blue-50/50 border border-blue-100 rounded-2xl p-3.5">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Odometer Reading (km)</label>
+              <input type="number" id="expOdo" value="${initOdo}" placeholder="${lastOdo ? 'Last recorded: ' + lastOdo + ' km' : 'e.g. 43100'}" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold">
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Total Price (${RS})</label>
-              <input type="number" id="fuelCost" placeholder="e.g. 2750" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold">
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="min-w-0">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Price / Liter (${RS})</label>
+                <input type="number" step="0.01" id="expPricePerLiter" value="${initPpl}" oninput="handleFuelAutoCalc('price')" placeholder="e.g. 107.40" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm">
+              </div>
+              <div class="min-w-0">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Fuel Liters (L)</label>
+                <input type="number" step="0.01" id="expLiters" value="${initLiters}" oninput="handleFuelAutoCalc('liters')" placeholder="e.g. 25.5" class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm">
+              </div>
+            </div>
+            <p class="text-[11px] text-blue-700">Enter any 2 of Price/L, Liters, or Total Cost to auto-calculate the 3rd.</p>
+          </div>
+
+          <!-- Total Cost & Notes -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Total Cost (${RS}) *</label>
+              <input type="number" step="0.01" id="expCost" value="${initCost}" oninput="handleFuelAutoCalc('total')" placeholder="e.g. 2750" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold">
+            </div>
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Notes / Station / Details</label>
+              <input type="text" id="expNotes" value="${escapeHtml(initNotes)}" placeholder="e.g. HP Pump / ORR Toll / Service" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-sm">
             </div>
           </div>
 
-          <button onclick="saveFuelEntry()" class="w-full bg-blue-600 active:bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow-sm">
-            Save Fuel Log
+          <button onclick="saveExpenseEntry('${editId || ''}')" class="w-full bg-blue-600 active:bg-blue-700 text-white text-sm font-semibold py-3 rounded-2xl shadow-sm">
+            ${existing ? 'Update Entry' : 'Save Expense'}
           </button>
         </div>
       `);
     }
 
-    function saveFuelEntry() {
-      const date = document.getElementById('fuelDate').value || todayStr();
-      const odometer = parseFloat(document.getElementById('fuelOdo').value) || 0;
-      const liters = parseFloat(document.getElementById('fuelLiters').value) || 0;
-      const totalCost = parseFloat(document.getElementById('fuelCost').value) || 0;
+    function onExpenseCategoryChange() {
+      const cat = document.getElementById('expCategory').value;
+      const fuelSec = document.getElementById('fuelFieldsSection');
+      if (cat === 'Fuel') fuelSec.classList.remove('hidden');
+      else fuelSec.classList.add('hidden');
+    }
 
-      if (odometer <= 0 || totalCost <= 0) {
-        alert('Please enter a valid odometer reading and total price.');
+    function handleFuelAutoCalc(changedField) {
+      const cat = document.getElementById('expCategory').value;
+      if (cat !== 'Fuel') return;
+
+      // Record the two most recently edited fields
+      fuelCalcHistory = fuelCalcHistory.filter(f => f !== changedField);
+      fuelCalcHistory.push(changedField);
+      if (fuelCalcHistory.length > 2) fuelCalcHistory.shift();
+
+      const priceEl = document.getElementById('expPricePerLiter');
+      const litersEl = document.getElementById('expLiters');
+      const totalEl = document.getElementById('expCost');
+
+      const price = parseFloat(priceEl.value);
+      const liters = parseFloat(litersEl.value);
+      const total = parseFloat(totalEl.value);
+
+      const hasPrice = !isNaN(price) && price > 0;
+      const hasLiters = !isNaN(liters) && liters > 0;
+      const hasTotal = !isNaN(total) && total > 0;
+
+      const thirdField = ['price', 'liters', 'total'].find(f => !fuelCalcHistory.includes(f));
+
+      if (thirdField === 'total' && hasPrice && hasLiters) {
+        totalEl.value = (price * liters).toFixed(2);
+      } else if (thirdField === 'liters' && hasTotal && hasPrice) {
+        litersEl.value = (total / price).toFixed(2);
+      } else if (thirdField === 'price' && hasTotal && hasLiters) {
+        priceEl.value = (total / liters).toFixed(2);
+      }
+    }
+
+    function saveExpenseEntry(editId) {
+      const category = document.getElementById('expCategory').value || 'Fuel';
+      const date = document.getElementById('expDate').value || todayStr();
+      const odometer = category === 'Fuel' ? (parseFloat(document.getElementById('expOdo').value) || 0) : 0;
+      const pricePerLiter = category === 'Fuel' ? (parseFloat(document.getElementById('expPricePerLiter').value) || 0) : 0;
+      const liters = category === 'Fuel' ? (parseFloat(document.getElementById('expLiters').value) || 0) : 0;
+      const totalCost = parseFloat(document.getElementById('expCost').value) || 0;
+      const notes = document.getElementById('expNotes').value.trim();
+
+      if (totalCost <= 0) {
+        alert('Please enter a valid Total Cost.');
+        return;
+      }
+      if (category === 'Fuel' && odometer <= 0) {
+        alert('Please enter the Odometer reading for Fuel logs.');
         return;
       }
 
-      state.fuelLogs.push({
-        id: 'fuel_' + Date.now(),
+      const entryObj = {
+        id: editId || ('fuel_' + Date.now()),
+        category,
         date,
         odometer,
+        pricePerLiter: pricePerLiter || (liters > 0 ? Number((totalCost / liters).toFixed(2)) : 0),
         liters,
-        totalCost
-      });
+        totalCost,
+        notes
+      };
+
+      if (editId) {
+        const idx = state.fuelLogs.findIndex(f => f.id === editId);
+        if (idx !== -1) state.fuelLogs[idx] = entryObj;
+        showToast('Entry updated!');
+      } else {
+        state.fuelLogs.push(entryObj);
+        showToast(`${category} expense saved!`);
+      }
 
       closeModal();
       saveState();
-      showToast('Fuel log saved!');
     }
 
-    function deleteFuel(id) {
-      if (!confirm('Delete this fuel log?')) return;
+    function deleteExpense(id) {
+      if (!confirm('Delete this expense entry?')) return;
       state.fuelLogs = state.fuelLogs.filter(f => f.id !== id);
       saveState();
+      showToast('Entry deleted');
     }
 
     /*****************************************************************
-     * 13. SETUP TAB (RIDERS DB, ROUTES DB, PROFILE & TEMPLATES, ACCOUNT)
+     * 13. SETUP TAB (RIDERS DB WITH JOINED DATE, ROUTES DB, SPACIOUS TEMPLATES, SHORTCUT GUIDE, ACCOUNT)
      *****************************************************************/
     function setSetupSubTab(st) {
       setupSubTab = st;
       renderApp();
     }
 
+    function insertTagAtCursor(textareaId, tagText) {
+      const el = document.getElementById(textareaId);
+      if (!el) return;
+      const start = el.selectionStart || el.value.length;
+      const end = el.selectionEnd || el.value.length;
+      el.value = el.value.substring(0, start) + tagText + el.value.substring(end);
+      el.focus();
+      el.selectionStart = el.selectionEnd = start + tagText.length;
+    }
+
+    function renderTagChips(textareaId) {
+      const tags = ['{Name}', '{RideName}', '{Pickup}', '{Drop}', '{Amount}', '{UPI}', '{Date}', '{Time}'];
+      return `
+        <div class="flex flex-wrap gap-1.5 mb-1.5">
+          ${tags.map(t => `
+            <button type="button" onclick="insertTagAtCursor('${textareaId}', '${t}')" class="text-[11px] font-mono bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md">
+              +${t}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
     function renderSetup() {
       const subNav = `
-        <div class="grid grid-cols-4 bg-gray-200/80 p-1 rounded-xl text-[11px] font-semibold">
+        <div class="grid grid-cols-4 bg-gray-200/80 p-1 rounded-xl text-[11px] font-semibold max-w-xl">
           <button onclick="setSetupSubTab('riders')" class="py-1.5 rounded-lg transition ${setupSubTab === 'riders' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Riders DB</button>
           <button onclick="setSetupSubTab('routes')" class="py-1.5 rounded-lg transition ${setupSubTab === 'routes' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Routes DB</button>
           <button onclick="setSetupSubTab('templates')" class="py-1.5 rounded-lg transition ${setupSubTab === 'templates' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Profile/Msg</button>
@@ -2040,47 +2672,52 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       `;
 
       if (setupSubTab === 'riders') {
-        const riderCards = state.riders.map(r => `
-          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <p class="font-bold text-sm text-gray-900">${r.name}</p>
-                <span class="text-xs font-bold text-blue-600">${formatCurrency(r.defaultFare)}</span>
+        const freqMap = getRiderRideFrequencyMap();
+        const riderCards = state.riders.map(r => {
+          const count = freqMap[r.id] || freqMap['name:' + r.name] || 0;
+          return `
+            <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <p class="font-bold text-sm text-gray-900 truncate">${escapeHtml(r.name)}</p>
+                  <span class="text-xs font-bold text-blue-600 shrink-0">${formatCurrency(r.defaultFare)}</span>
+                  <span class="text-[10px] font-semibold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded shrink-0">${count} ride${count === 1 ? '' : 's'}</span>
+                </div>
+                ${r.company ? `<p class="text-[11px] font-semibold text-indigo-600 truncate">${escapeHtml(r.company)}</p>` : ''}
+                <p class="text-xs text-gray-500 mt-0.5 truncate">${escapeHtml(r.pickup)} ${ICONS.arrowRight} ${escapeHtml(r.drop)}</p>
+                <p class="text-[11px] text-gray-400 mt-0.5">+${r.phone} &bull; Joined ${formatDateDisplay(r.joinedDate)}</p>
               </div>
-              ${r.company ? `<p class="text-[11px] font-semibold text-indigo-600">${r.company}</p>` : ''}
-              <p class="text-xs text-gray-500 mt-0.5">${r.pickup} ${ICONS.arrowRight} ${r.drop}</p>
-              <p class="text-[11px] text-gray-400 mt-0.5">+${r.phone}${r.shift ? ' &bull; ' + r.shift : ''}</p>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="openRiderFormModal('${r.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl">Edit</button>
+                <button onclick="deleteRider('${r.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete Rider">
+                  ${ICONS.trash}
+                </button>
+              </div>
             </div>
-            <div class="flex items-center gap-1.5">
-              <button onclick="openRiderFormModal('${r.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl">Edit</button>
-              <button onclick="deleteRider('${r.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete Rider">
-                ${ICONS.trash}
-              </button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         return `
           ${subNav}
-          <button onclick="openRiderFormModal()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-2xl shadow-xs">
+          <button onclick="openRiderFormModal()" class="w-full md:w-auto bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-xs">
             + Add New Rider to Database
           </button>
-          <div class="space-y-2.5">${riderCards}</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${riderCards}</div>
         `;
       }
 
       if (setupSubTab === 'routes') {
         const routeCards = state.routes.map(rt => `
-          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <p class="font-bold text-sm text-gray-900">${rt.name}</p>
-                ${rt.isReturn ? `<span class="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full">Return Swap</span>` : ''}
+          <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-gray-100 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <p class="font-bold text-sm text-gray-900 truncate">${escapeHtml(rt.name)}</p>
+                ${rt.isReturn ? `<span class="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full shrink-0">Return Swap</span>` : ''}
               </div>
-              <p class="text-xs text-gray-500 mt-0.5">${rt.fromPoint || 'Start'} ${ICONS.arrowRight} ${rt.toPoint || 'End'}</p>
+              <p class="text-xs text-gray-500 mt-0.5 truncate">${escapeHtml(rt.fromPoint || 'Start')} ${ICONS.arrowRight} ${escapeHtml(rt.toPoint || 'End')}</p>
               <p class="text-[11px] text-gray-400 mt-0.5">Time: ${formatTime12Hr(rt.defaultTime)} &bull; ${rt.capacity} seats &bull; Toll: ${formatCurrency(rt.defaultToll || 0)}</p>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 shrink-0">
               <button onclick="openRouteFormModal('${rt.id}')" class="bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-2 rounded-xl">Edit</button>
               <button onclick="deleteRoute('${rt.id}')" class="bg-red-50 text-red-600 p-2 rounded-xl flex items-center justify-center" aria-label="Delete Route">
                 ${ICONS.trash}
@@ -2091,85 +2728,113 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
 
         return `
           ${subNav}
-          <button onclick="openRouteFormModal()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-2xl shadow-xs">
+          <button onclick="openRouteFormModal()" class="w-full md:w-auto bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-xs">
             + Add New Ride Route / Type
           </button>
-          <div class="space-y-2.5">${routeCards}</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">${routeCards}</div>
         `;
       }
 
       if (setupSubTab === 'templates') {
         return `
           ${subNav}
-          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Driver Profile &amp; Admin Post Details</h3>
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- Left Column: Driver Profile + iPhone Shortcut Setup Guide -->
+            <div class="lg:col-span-5 space-y-4">
+              <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Driver Profile &amp; Admin Post Details</h3>
 
-            <div class="grid grid-cols-2 gap-2.5">
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Your Name</label>
-                <input type="text" id="setDriverName" value="${state.settings.driverName || ''}" placeholder="Raj Reddy" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Your Name</label>
+                    <input type="text" id="setDriverName" value="${escapeHtml(state.settings.driverName || '')}" placeholder="Raj Reddy" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Contact Number</label>
+                    <input type="tel" id="setDriverPhone" value="${escapeHtml(state.settings.driverPhone || '')}" placeholder="9959344266" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Vehicle Details</label>
+                    <input type="text" id="setVehicleInfo" value="${escapeHtml(state.settings.vehicleInfo || '')}" placeholder="Tiago (Blue) 6259" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Admin Phone</label>
+                    <input type="tel" id="setAdminPhone" value="${escapeHtml(state.settings.adminPhone || '')}" placeholder="919876543210 (Optional)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Your UPI ID</label>
+                    <input type="text" id="setUpi" value="${escapeHtml(state.settings.upiId || '')}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                  <div class="min-w-0">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Group Link (Optional)</label>
+                    <input type="url" id="setGroupLink" value="${escapeHtml(state.settings.groupLink || '')}" placeholder="https://chat.whatsapp.com/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                  </div>
+                </div>
               </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Contact Number</label>
-                <input type="tel" id="setDriverPhone" value="${state.settings.driverPhone || ''}" placeholder="9959344266" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+
+              <!-- iPhone Shortcut Setup Guide Card -->
+              <div class="bg-indigo-50/80 border border-indigo-200 rounded-2xl p-4 space-y-2 text-xs text-indigo-950">
+                <div class="flex items-center gap-1.5 font-bold text-indigo-900">
+                  ${ICONS.bolt} <span>iPhone Shortcut Setup (1-Time, 2 Mins)</span>
+                </div>
+                <p class="text-[11px] text-indigo-800">To enable 1-tap auto-sending on your iPhone, create a Shortcut in Apple’s <strong>Shortcuts</strong> app named exactly <code class="bg-white px-1.5 py-0.5 rounded font-bold">CarpoolNotify</code>:</p>
+                <ol class="list-decimal pl-4 space-y-1 text-[11px] text-indigo-900">
+                  <li>Add <strong>Get Dictionary from Input</strong> (set input to <em>Shortcut Input</em>).</li>
+                  <li>Add <strong>Repeat with Each</strong> (connects to <em>Dictionary</em>).</li>
+                  <li>Inside Repeat, add <strong>Get Dictionary Value</strong> for key <code class="bg-white px-1 rounded">msg</code> from <em>Repeat Item</em>.</li>
+                  <li>Add a second <strong>Get Dictionary Value</strong> for key <code class="bg-white px-1 rounded">phone</code> from <em>Repeat Item</em>.</li>
+                  <li>Add WhatsApp's <strong>Send Message</strong> action: set <em>Message</em> to the first Dictionary Value and <em>Recipients</em> to the second Dictionary Value (ensure riders are saved in iPhone Contacts).</li>
+                </ol>
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2.5">
+            <!-- Right Column: Spacious Custom WhatsApp Templates (#12) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl p-4 md:p-5 shadow-xs border border-gray-100 space-y-4">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Vehicle Details</label>
-                <input type="text" id="setVehicleInfo" value="${state.settings.vehicleInfo || ''}" placeholder="Tiago (Blue) 6259" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Custom WhatsApp Message Templates</h3>
+                <p class="text-[11px] text-gray-400 mt-0.5">Tap any blue placeholder button above a box to insert it at your cursor, or paste your own text directly.</p>
               </div>
+
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Admin Phone</label>
-                <input type="tel" id="setAdminPhone" value="${state.settings.adminPhone || ''}" placeholder="919876543210 (Optional)" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <label class="block text-xs font-bold text-gray-700 mb-1">1. Ride Started Message</label>
+                ${renderTagChips('setMsgStart')}
+                <textarea id="setMsgStart" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed resize-y focus:border-blue-500 outline-none">${escapeHtml(state.settings.msgStart)}</textarea>
               </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Your UPI ID</label>
-                <input type="text" id="setUpi" value="${state.settings.upiId || ''}" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <label class="block text-xs font-bold text-gray-700 mb-1">2. Ride Ended / Thank You Message</label>
+                ${renderTagChips('setMsgEnd')}
+                <textarea id="setMsgEnd" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed resize-y focus:border-blue-500 outline-none">${escapeHtml(state.settings.msgEnd)}</textarea>
               </div>
+
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Group Link (Optional)</label>
-                <input type="url" id="setGroupLink" value="${state.settings.groupLink || ''}" placeholder="https://chat.whatsapp.com/..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+                <label class="block text-xs font-bold text-gray-700 mb-1">3. Payment Reminder Message</label>
+                ${renderTagChips('setMsgReminder')}
+                <textarea id="setMsgReminder" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed resize-y focus:border-blue-500 outline-none">${escapeHtml(state.settings.msgReminder)}</textarea>
               </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">4. Ride Time Update Message</label>
+                ${renderTagChips('setMsgTimeUpdate')}
+                <textarea id="setMsgTimeUpdate" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed resize-y focus:border-blue-500 outline-none">${escapeHtml(state.settings.msgTimeUpdate)}</textarea>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">5. Ride Cancelled Message</label>
+                ${renderTagChips('setMsgCancelled')}
+                <textarea id="setMsgCancelled" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm leading-relaxed resize-y focus:border-blue-500 outline-none">${escapeHtml(state.settings.msgCancelled)}</textarea>
+              </div>
+
+              <button onclick="saveTemplates()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-sm font-semibold py-3.5 rounded-2xl shadow-xs">
+                Save Profile &amp; All Templates
+              </button>
             </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Custom WhatsApp Message Templates</h3>
-            <p class="text-[11px] text-gray-400">Tags: <code class="bg-gray-100 px-1 rounded">{Name}</code> <code class="bg-gray-100 px-1 rounded">{RideName}</code> <code class="bg-gray-100 px-1 rounded">{Pickup}</code> <code class="bg-gray-100 px-1 rounded">{Amount}</code> <code class="bg-gray-100 px-1 rounded">{UPI}</code> <code class="bg-gray-100 px-1 rounded">{Date}</code> <code class="bg-gray-100 px-1 rounded">{Time}</code></p>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Started Message</label>
-              <textarea id="setMsgStart" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgStart}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Ended / Thank You Message</label>
-              <textarea id="setMsgEnd" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgEnd}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Payment Reminder Message</label>
-              <textarea id="setMsgReminder" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgReminder}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Time Update Message</label>
-              <textarea id="setMsgTimeUpdate" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgTimeUpdate}</textarea>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Ride Cancelled Message</label>
-              <textarea id="setMsgCancelled" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">${state.settings.msgCancelled}</textarea>
-            </div>
-
-            <button onclick="saveTemplates()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-3 rounded-xl shadow-xs">
-              Save Profile &amp; Templates
-            </button>
           </div>
         `;
       }
@@ -2186,7 +2851,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
             </div>
             <div class="bg-gray-50 rounded-xl p-3 text-xs space-y-1">
               <p class="text-gray-500">Signed in as:</p>
-              <p class="font-bold text-gray-900">${currentUser.email}</p>
+              <p class="font-bold text-gray-900">${escapeHtml(currentUser.email)}</p>
               <p class="text-[11px] text-gray-400 pt-1">Log in with this same email and password on any iPhone, Android, or laptop to access your data instantly.</p>
             </div>
             <button onclick="handleSignOut()" class="w-full bg-red-50 active:bg-red-100 text-red-600 border border-red-200 text-xs font-bold py-2.5 rounded-xl">
@@ -2198,24 +2863,26 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
 
       return `
         ${subNav}
-        ${accountCard}
-        <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Export &amp; Local Backup</h3>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="downloadBackupJSON()" class="bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-xl">
-              Download JSON
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${accountCard}
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Export &amp; Local Backup</h3>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="downloadBackupJSON()" class="bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-xl">
+                Download JSON
+              </button>
+              <label class="bg-gray-100 text-gray-800 text-xs font-semibold py-2.5 rounded-xl text-center cursor-pointer">
+                Restore JSON
+                <input type="file" accept=".json" onchange="restoreBackupJSON(event)" class="hidden">
+              </label>
+            </div>
+            <button onclick="exportRidesCSV()" class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold py-2.5 rounded-xl">
+              Export Rides Ledger (CSV)
             </button>
-            <label class="bg-gray-100 text-gray-800 text-xs font-semibold py-2.5 rounded-xl text-center cursor-pointer">
-              Restore JSON
-              <input type="file" accept=".json" onchange="restoreBackupJSON(event)" class="hidden">
-            </label>
+            <button onclick="resetAllData()" class="w-full text-red-500 text-[11px] font-semibold py-2">
+              Clear All Data / Start Fresh
+            </button>
           </div>
-          <button onclick="exportRidesCSV()" class="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold py-2.5 rounded-xl">
-            Export Rides Ledger (CSV)
-          </button>
-          <button onclick="resetAllData()" class="w-full text-red-500 text-[11px] font-semibold py-2">
-            Clear All Data / Start Fresh
-          </button>
         </div>
       `;
     }
@@ -2223,52 +2890,56 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     function openRiderFormModal(riderId = null) {
       const existing = riderId ? state.riders.find(r => r.id === riderId) : null;
       openModal(`
-        <div class="space-y-3">
+        <div class="space-y-3.5">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold">${existing ? 'Edit Rider' : 'New Rider'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name *</label>
-              <input type="text" id="rfName" value="${existing ? existing.name : ''}" placeholder="Rahul Sharma" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rfName" value="${existing ? escapeHtml(existing.name) : ''}" placeholder="Rahul Sharma" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Company</label>
-              <input type="text" id="rfCompany" value="${existing ? (existing.company || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rfCompany" value="${existing ? escapeHtml(existing.company || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">WhatsApp Phone (91) *</label>
               <input type="tel" id="rfPhone" value="${existing ? existing.phone : '91'}" placeholder="919876543210" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default Fare (${RS})</label>
               <input type="number" id="rfFare" value="${existing ? existing.defaultFare : ''}" placeholder="150" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default Pickup</label>
-              <input type="text" id="rfPickup" value="${existing ? existing.pickup : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rfPickup" value="${existing ? escapeHtml(existing.pickup) : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default Drop</label>
-              <input type="text" id="rfDrop" value="${existing ? existing.drop : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rfDrop" value="${existing ? escapeHtml(existing.drop) : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Rider Joined Date</label>
+              <input type="date" id="rfJoinedDate" value="${existing ? (existing.joinedDate || todayStr()) : todayStr()}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Preferred Shift Timing</label>
-              <input type="text" id="rfShift" value="${existing ? (existing.shift || '') : ''}" placeholder="09:00 AM - 06:00 PM" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Landmark / Notes</label>
-              <input type="text" id="rfNotes" value="${existing ? (existing.notes || '') : ''}" placeholder="Gate 2 / Pays Friday" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rfShift" value="${existing ? escapeHtml(existing.shift || '') : ''}" placeholder="09:00 AM - 06:00 PM" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
-          <button onclick="saveRiderForm('${riderId || ''}')" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-sm">
+          <div class="min-w-0">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Landmark / Notes</label>
+            <input type="text" id="rfNotes" value="${existing ? escapeHtml(existing.notes || '') : ''}" placeholder="Gate 2 / Pays Friday" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+          </div>
+          <button onclick="saveRiderForm('${riderId || ''}')" class="w-full bg-blue-600 text-white text-sm font-semibold py-3 rounded-2xl shadow-sm">
             Save Rider
           </button>
         </div>
@@ -2282,6 +2953,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
       const defaultFare = parseFloat(document.getElementById('rfFare').value) || 0;
       const pickup = document.getElementById('rfPickup').value.trim() || 'Pickup';
       const drop = document.getElementById('rfDrop').value.trim() || 'Drop';
+      const joinedDate = document.getElementById('rfJoinedDate').value || todayStr();
       const shift = document.getElementById('rfShift').value.trim();
       const notes = document.getElementById('rfNotes').value.trim();
 
@@ -2290,7 +2962,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         return;
       }
 
-      const riderObj = { id: riderId || ('r_' + Date.now()), name, company, phone, pickup, drop, defaultFare, shift, notes };
+      const riderObj = { id: riderId || ('r_' + Date.now()), name, company, phone, pickup, drop, defaultFare, joinedDate, shift, notes };
       if (riderId) {
         const idx = state.riders.findIndex(r => r.id === riderId);
         if (idx !== -1) state.riders[idx] = riderObj;
@@ -2312,47 +2984,47 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     function openRouteFormModal(routeId = null) {
       const existing = routeId ? state.routes.find(r => r.id === routeId) : null;
       openModal(`
-        <div class="space-y-3">
+        <div class="space-y-3.5">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold">${existing ? 'Edit Ride Route' : 'New Ride Route'}</h3>
             <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
           </div>
-          <div>
+          <div class="min-w-0">
             <label class="block text-xs font-semibold text-gray-600 mb-1">Ride / Route Name</label>
-            <input type="text" id="rtName" value="${existing ? existing.name : ''}" placeholder="e.g. Return Ride (Evening)" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+            <input type="text" id="rtName" value="${existing ? escapeHtml(existing.name) : ''}" placeholder="e.g. Return Ride (Evening)" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
           </div>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default From</label>
-              <input type="text" id="rtFrom" value="${existing ? (existing.fromPoint || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rtFrom" value="${existing ? escapeHtml(existing.fromPoint || '') : ''}" placeholder="Tech Mahindra" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default To</label>
-              <input type="text" id="rtTo" value="${existing ? (existing.toPoint || '') : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
+              <input type="text" id="rtTo" value="${existing ? escapeHtml(existing.toPoint || '') : ''}" placeholder="Turkayamjal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
           </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Start Time</label>
-              <input type="time" id="rtTime" value="${existing ? existing.defaultTime : '08:30'}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2 py-2 text-xs">
+              <input type="time" id="rtTime" value="${existing ? existing.defaultTime : '08:30'}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Seats</label>
-              <input type="number" id="rtCap" value="${existing ? existing.capacity : 4}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs">
+              <input type="number" id="rtCap" value="${existing ? existing.capacity : 4}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs">
             </div>
-            <div>
+            <div class="min-w-0">
               <label class="block text-xs font-semibold text-gray-600 mb-1">Default Toll (${RS})</label>
-              <input type="number" id="rtToll" value="${existing ? (existing.defaultToll || 0) : 0}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold">
+              <input type="number" id="rtToll" value="${existing ? (existing.defaultToll || 0) : 0}" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold">
             </div>
           </div>
-          <label class="flex items-center gap-2.5 bg-purple-50 border border-purple-200 rounded-xl p-2.5 cursor-pointer">
-            <input type="checkbox" id="rtIsReturn" ${existing && existing.isReturn ? 'checked' : ''} class="w-4 h-4 accent-purple-600">
+          <label class="flex items-center gap-2.5 bg-purple-50 border border-purple-200 rounded-xl p-3 cursor-pointer">
+            <input type="checkbox" id="rtIsReturn" ${existing && existing.isReturn ? 'checked' : ''} class="w-4 h-4 accent-purple-600 shrink-0">
             <div>
               <p class="text-xs font-bold text-purple-900">Return Trip (Auto-Swap Pickup &amp; Drop)</p>
               <p class="text-[10px] text-purple-700">Automatically reverses every rider's default Pickup and Drop points when scheduling.</p>
             </div>
           </label>
-          <button onclick="saveRouteForm('${routeId || ''}')" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-sm">
+          <button onclick="saveRouteForm('${routeId || ''}')" class="w-full bg-blue-600 text-white text-sm font-semibold py-3 rounded-2xl shadow-sm">
             Save Route
           </button>
         </div>
@@ -2426,7 +3098,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         try {
           const imported = JSON.parse(e.target.result);
           if (imported.riders && imported.rides) {
-            state = imported;
+            state = normalizeState(imported);
             saveState();
             showToast('Backup restored & synced!');
           } else {
@@ -2460,7 +3132,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     function resetAllData() {
-      if (!confirm('Clear all rides, fuel logs, and riders in your account so you can start with a blank slate?')) return;
+      if (!confirm('Clear all rides, expense logs, and riders in your account so you can start with a blank slate?')) return;
       state = {
         riders: [],
         routes: [
