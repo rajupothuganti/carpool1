@@ -13,6 +13,12 @@
   <meta name="theme-color" content="#F2F2F7" />
 
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase Compat SDKs (Auth + Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --ios-bg: #F2F2F7;
@@ -65,46 +71,93 @@
 </head>
 <body class="min-h-screen flex flex-col select-none">
 
-  <!-- Top Sticky Header -->
-  <header class="sticky top-0 z-30 glass-header border-b border-gray-200/80 safe-top px-4 pb-3">
-    <div class="max-w-lg mx-auto flex items-center justify-between">
-      <div>
-        <div class="flex items-center gap-2">
-          <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Ledger</p>
-          <span id="cloudStatusBadge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Synced</span>
+  <!-- AUTHENTICATION SCREEN (Shown when signed out) -->
+  <div id="authScreen" class="hidden fixed inset-0 z-50 bg-[#F2F2F7] flex flex-col justify-center px-5 safe-top safe-bottom overflow-y-auto">
+    <div class="w-full max-w-sm mx-auto space-y-5">
+      <div class="text-center space-y-1.5">
+        <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl mx-auto flex items-center justify-center shadow-md">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
         </div>
-        <h1 id="headerTitle" class="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-gray-900">Carpool Pro</h1>
+        <p class="text-xs text-gray-500">Sign in to sync your rides, payments &amp; fuel logs across all devices</p>
       </div>
-      <div id="headerActionArea"></div>
-    </div>
-  </header>
 
-  <!-- Main Scrollable Content -->
-  <main id="appMain" class="flex-1 w-full max-w-lg mx-auto px-4 pt-4 pb-28 space-y-4">
-    <!-- Rendered dynamically by JS -->
-  </main>
+      <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3.5">
+        <div class="grid grid-cols-2 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+          <button type="button" id="authTabLogin" onclick="switchAuthMode('login')" class="py-2 rounded-lg bg-white text-gray-900 shadow-xs">Sign In</button>
+          <button type="button" id="authTabSignup" onclick="switchAuthMode('signup')" class="py-2 rounded-lg text-gray-500">Create Account</button>
+        </div>
 
-  <!-- Bottom iOS Tab Bar -->
-  <nav class="fixed bottom-0 left-0 right-0 z-30 glass-tabbar border-t border-gray-200/80 safe-bottom">
-    <div class="max-w-lg mx-auto grid grid-cols-4 pt-1.5 pb-1">
-      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center justify-center gap-0.5 py-1 text-blue-600">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-        <span class="text-[10px] font-semibold">Dashboard</span>
-      </button>
-      <button onclick="switchTab('rides')" id="tab-rides" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
-        <span class="text-[10px] font-semibold">Rides</span>
-      </button>
-      <button onclick="switchTab('fuel')" id="tab-fuel" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-        <span class="text-[10px] font-semibold">Fuel</span>
-      </button>
-      <button onclick="switchTab('setup')" id="tab-setup" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span class="text-[10px] font-semibold">Setup</span>
-      </button>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+          <input type="email" id="authEmail" placeholder="you@gmail.com" autocomplete="email" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+          <input type="password" id="authPassword" placeholder="Minimum 6 characters" autocomplete="current-password" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-blue-500">
+        </div>
+
+        <p id="authErrorMsg" class="hidden text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl p-2.5"></p>
+
+        <button type="button" id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-sm font-bold py-3 rounded-2xl shadow-sm">
+          Sign In
+        </button>
+
+        <div class="text-center pt-1">
+          <button type="button" onclick="handleForgotPassword()" class="text-xs font-semibold text-blue-600">Forgot Password?</button>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-center text-gray-400 px-4">
+        First time signing in on this iPhone? Your existing local rides and riders will automatically upload to your cloud account.
+      </p>
     </div>
-  </nav>
+  </div>
+
+  <!-- MAIN APP SHELL -->
+  <div id="appShell" class="hidden flex-1 flex flex-col">
+    <!-- Top Sticky Header -->
+    <header class="sticky top-0 z-30 glass-header border-b border-gray-200/80 safe-top px-4 pb-3">
+      <div class="max-w-lg mx-auto flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <p id="headerSubtitle" class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Analytics &amp; Ledger</p>
+            <span id="cloudStatusBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Cloud Synced</span>
+          </div>
+          <h1 id="headerTitle" class="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        </div>
+        <div id="headerActionArea"></div>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Content -->
+    <main id="appMain" class="flex-1 w-full max-w-lg mx-auto px-4 pt-4 pb-28 space-y-4">
+      <!-- Rendered dynamically by JS -->
+    </main>
+
+    <!-- Bottom iOS Tab Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-30 glass-tabbar border-t border-gray-200/80 safe-bottom">
+      <div class="max-w-lg mx-auto grid grid-cols-4 pt-1.5 pb-1">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex flex-col items-center justify-center gap-0.5 py-1 text-blue-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span class="text-[10px] font-semibold">Dashboard</span>
+        </button>
+        <button onclick="switchTab('rides')" id="tab-rides" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+          <span class="text-[10px] font-semibold">Rides</span>
+        </button>
+        <button onclick="switchTab('fuel')" id="tab-fuel" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span class="text-[10px] font-semibold">Fuel</span>
+        </button>
+        <button onclick="switchTab('setup')" id="tab-setup" class="flex flex-col items-center justify-center gap-0.5 py-1 text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="text-[10px] font-semibold">Setup</span>
+        </button>
+      </div>
+    </nav>
+  </div>
 
   <!-- Universal Modal Container -->
   <div id="modalBackdrop" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -118,7 +171,20 @@
 
   <script>
     /*****************************************************************
-     * 1. SAFE UNICODE SYMBOLS & SVG ICONS
+     * 1. YOUR FIREBASE CONFIG KEYS (PRE-CONFIGURED)
+     *****************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyCXAzRVEBNyeD3KXpSuFIO6xQ5nCDLt11g",
+      authDomain: "carpool-pro-8b45f.firebaseapp.com",
+      projectId: "carpool-pro-8b45f",
+      storageBucket: "carpool-pro-8b45f.firebasestorage.app",
+      messagingSenderId: "995182008179",
+      appId: "1:995182008179:web:b74f0ac3b4ec0555b49706",
+      measurementId: "G-J3R9167DP6"
+    };
+
+    /*****************************************************************
+     * 2. SAFE UNICODE SYMBOLS & SVG ICONS
      *****************************************************************/
     const RS = '\u20B9';
     const EMOJI = {
@@ -155,7 +221,7 @@
     }
 
     /*****************************************************************
-     * 2. STATE MANAGEMENT, LOCAL STORAGE & GOOGLE SHEET AUTO-SYNC
+     * 3. STATE, FIREBASE AUTH & FIRESTORE REAL-TIME SYNC
      *****************************************************************/
     const STORAGE_KEY = 'carpool_pro_v3';
     const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -163,36 +229,14 @@
     const defaultState = {
       riders: [
         { id: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Turkayamjal', drop: 'Tech Mahindra', defaultFare: 150, shift: '09:00 AM - 06:00 PM', notes: 'Main Gate Pickup' },
-        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'LB Nagar Metro', drop: 'Gachibowli', defaultFare: 180, shift: '09:30 AM - 06:30 PM', notes: '' },
-        { id: 'r3', name: 'Suresh Verma', phone: '919876543212', company: 'TCS', pickup: 'Nagole X Roads', drop: 'Hitec City', defaultFare: 120, shift: '08:30 AM - 05:30 PM', notes: 'Pays every Friday' }
+        { id: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'LB Nagar Metro', drop: 'Gachibowli', defaultFare: 180, shift: '09:30 AM - 06:30 PM', notes: '' }
       ],
       routes: [
         { id: 'rt1', name: 'Office Ride (Morning)', fromPoint: 'Turkayamjal', toPoint: 'Tech Mahindra', defaultTime: '08:30', capacity: 4, defaultToll: 60, isReturn: false },
         { id: 'rt2', name: 'Return Ride (Evening)', fromPoint: 'Tech Mahindra', toPoint: 'Turkayamjal', defaultTime: '15:20', capacity: 4, defaultToll: 60, isReturn: true }
       ],
-      rides: [
-        {
-          id: 'ride_demo_1',
-          routeId: 'rt2',
-          routeName: 'Return Ride (Evening)',
-          fromPoint: 'Tech Mahindra',
-          toPoint: 'Turkayamjal',
-          date: todayStr(),
-          time: '15:20',
-          capacity: 4,
-          tollCost: 60,
-          status: 'scheduled',
-          liveMapLink: '',
-          passengers: [
-            { riderId: 'r1', name: 'Rahul Sharma', phone: '919876543210', company: 'Tech Mahindra', pickup: 'Tech Mahindra', drop: 'Turkayamjal', fare: 150, paid: false, paidAmount: 0, payMode: 'UPI' },
-            { riderId: 'r2', name: 'Pooja Reddy', phone: '919876543211', company: 'Infosys', pickup: 'Gachibowli', drop: 'LB Nagar Metro', fare: 180, paid: false, paidAmount: 0, payMode: 'UPI' }
-          ]
-        }
-      ],
-      fuelLogs: [
-        { id: 'f1', date: '2026-11-01', odometer: 42100, liters: 28.5, totalCost: 3050 },
-        { id: 'f2', date: '2026-11-09', odometer: 42560, liters: 27.0, totalCost: 2890 }
-      ],
+      rides: [],
+      fuelLogs: [],
       settings: {
         driverName: 'Raj Reddy',
         driverPhone: '9959344266',
@@ -205,19 +249,19 @@
         msgReminder: 'Hi {Name}, gentle reminder for your pending carpool fare of Rs.{Amount} ({RideName} on {Date}). Please UPI to {UPI}. Thank you!',
         msgTimeUpdate: 'Hi {Name}, update on {RideName} ({Date}): Start time has been updated to {Time}. Please be ready at {Pickup}.',
         msgCancelled: 'Hi {Name}, sorry to inform you that {RideName} scheduled for {Date} at {Time} has been cancelled due to unavoidable reasons.',
-        cloudGmail: '',
-        googleSheetUrl: '',
-        appsScriptUrl: '',
-        syncFrequency: 'realtime',
         lastSyncedAt: ''
       }
     };
 
-    let state = loadState();
+    let state = loadLocalState();
     let currentTab = 'dashboard';
     let dashboardPeriod = 'month';
     let ridesFilter = 'upcoming';
     let setupSubTab = 'riders';
+    let authMode = 'login';
+    let currentUser = null;
+    let firestoreUnsubscribe = null;
+    let isApplyingRemoteSnapshot = false;
 
     let batchQueue = {
       rideId: null,
@@ -227,7 +271,7 @@
       customNote: ''
     };
 
-    function loadState() {
+    function loadLocalState() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('carpool_pro_v2') || localStorage.getItem('carpool_pro_v1');
         if (saved) {
@@ -239,16 +283,55 @@
           };
         }
       } catch (e) {
-        console.error('Load state error', e);
+        console.error('Local load error', e);
       }
       return JSON.parse(JSON.stringify(defaultState));
     }
 
-    function saveState(skipCloud = false) {
+    function hasMeaningfulLocalData() {
+      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('carpool_pro_v2') || localStorage.getItem('carpool_pro_v1');
+      if (!saved) return false;
+      try {
+        const parsed = JSON.parse(saved);
+        return (parsed.rides && parsed.rides.length > 0) || (parsed.fuelLogs && parsed.fuelLogs.length > 0) || (parsed.riders && parsed.riders.length > 2);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setCloudBadge(status) {
+      const badge = document.getElementById('cloudStatusBadge');
+      if (!badge) return;
+      if (status === 'synced') {
+        badge.textContent = 'Cloud Synced';
+        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+      } else if (status === 'syncing') {
+        badge.textContent = 'Syncing...';
+        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
+      } else {
+        badge.textContent = 'Offline Cached';
+        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700';
+      }
+    }
+
+    async function saveState() {
+      state.settings.lastSyncedAt = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderApp();
-      if (!skipCloud) {
-        maybeAutoSyncCloud();
+
+      if (currentUser && window.db && !isApplyingRemoteSnapshot) {
+        setCloudBadge('syncing');
+        try {
+          await window.db.collection('users').doc(currentUser.uid).set({
+            email: currentUser.email,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            state: JSON.parse(JSON.stringify(state))
+          });
+          setCloudBadge('synced');
+        } catch (err) {
+          console.error('Firestore write failed:', err);
+          setCloudBadge('offline');
+        }
       }
     }
 
@@ -257,108 +340,152 @@
       el.textContent = msg;
       el.classList.remove('hidden');
       clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2500);
+      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
     }
 
-    /*****************************************************************
-     * 3. GOOGLE SHEET CLOUD SYNC ENGINE
-     *****************************************************************/
-    function maybeAutoSyncCloud() {
-      const url = (state.settings.appsScriptUrl || '').trim();
-      const freq = state.settings.syncFrequency || 'off';
-      if (!url || freq === 'off') return;
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    window.auth = firebase.auth();
+    window.db = firebase.firestore();
+    window.db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-      if (freq === 'realtime') {
-        pushToGoogleSheet(true);
-        return;
+    window.auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appShell').classList.remove('hidden');
+        await attachUserCloudListener(user);
+      } else {
+        currentUser = null;
+        if (firestoreUnsubscribe) {
+          firestoreUnsubscribe();
+          firestoreUnsubscribe = null;
+        }
+        document.getElementById('appShell').classList.add('hidden');
+        document.getElementById('authScreen').classList.remove('hidden');
       }
+    });
 
-      const last = state.settings.lastSyncedAt ? new Date(state.settings.lastSyncedAt).getTime() : 0;
-      const now = Date.now();
-      const diffHours = (now - last) / (1000 * 60 * 60);
-
-      if (freq === 'daily' && diffHours >= 24) {
-        pushToGoogleSheet(true);
-      } else if (freq === 'weekly' && diffHours >= 168) {
-        pushToGoogleSheet(true);
-      }
-    }
-
-    async function pushToGoogleSheet(silent = false) {
-      const url = (state.settings.appsScriptUrl || '').trim();
-      if (!url) {
-        if (!silent) alert('Please paste your Google Apps Script Web App URL in Setup -> Cloud/Data first.');
-        return;
-      }
-
-      const badge = document.getElementById('cloudStatusBadge');
-      if (badge) {
-        badge.textContent = 'Syncing...';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700';
-      }
+    async function attachUserCloudListener(user) {
+      const docRef = window.db.collection('users').doc(user.uid);
+      setCloudBadge('syncing');
 
       try {
-        const payload = {
-          action: 'backup',
-          gmail: state.settings.cloudGmail || '',
-          updatedAt: new Date().toISOString(),
-          data: state
-        };
-
-        await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-
-        state.settings.lastSyncedAt = new Date().toISOString();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-        if (badge) {
-          badge.textContent = 'Synced';
-          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700';
+        const initialSnap = await docRef.get();
+        if (!initialSnap.exists) {
+          const migrated = hasMeaningfulLocalData();
+          await docRef.set({
+            email: user.email,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            state: JSON.parse(JSON.stringify(state))
+          });
+          if (migrated) {
+            showToast('Existing iPhone data uploaded to your cloud account!');
+          }
         }
-        if (!silent) {
+      } catch (e) {
+        console.error('Initial cloud check error:', e);
+      }
+
+      if (firestoreUnsubscribe) firestoreUnsubscribe();
+      firestoreUnsubscribe = docRef.onSnapshot((doc) => {
+        if (doc.exists && doc.data().state) {
+          isApplyingRemoteSnapshot = true;
+          const remoteState = doc.data().state;
+          state = {
+            ...defaultState,
+            ...remoteState,
+            settings: { ...defaultState.settings, ...(remoteState.settings || {}) }
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          setCloudBadge('synced');
           renderApp();
-          showToast('Synced to Google Sheet!');
+          isApplyingRemoteSnapshot = false;
         }
-      } catch (err) {
-        if (badge) {
-          badge.textContent = 'Sync Offline';
-          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700';
-        }
-        if (!silent) showToast('Sync failed (check internet or Script URL)');
+      }, (err) => {
+        console.error('Snapshot listener error:', err);
+        setCloudBadge('offline');
+      });
+    }
+
+    /*****************************************************************
+     * 4. AUTH UI HANDLERS
+     *****************************************************************/
+    function switchAuthMode(mode) {
+      authMode = mode;
+      const loginTab = document.getElementById('authTabLogin');
+      const signupTab = document.getElementById('authTabSignup');
+      const btn = document.getElementById('authSubmitBtn');
+      document.getElementById('authErrorMsg').classList.add('hidden');
+
+      if (mode === 'login') {
+        loginTab.className = 'py-2 rounded-lg bg-white text-gray-900 shadow-xs';
+        signupTab.className = 'py-2 rounded-lg text-gray-500';
+        btn.textContent = 'Sign In';
+      } else {
+        signupTab.className = 'py-2 rounded-lg bg-white text-gray-900 shadow-xs';
+        loginTab.className = 'py-2 rounded-lg text-gray-500';
+        btn.textContent = 'Create Cloud Account';
       }
     }
 
-    async function pullFromGoogleSheet() {
-      const url = (state.settings.appsScriptUrl || '').trim();
-      if (!url) {
-        alert('Please paste your Google Apps Script Web App URL first.');
+    async function handleAuthSubmit() {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const errEl = document.getElementById('authErrorMsg');
+      const btn = document.getElementById('authSubmitBtn');
+
+      errEl.classList.add('hidden');
+      if (!email || !password) {
+        errEl.textContent = 'Please enter both email and password.';
+        errEl.classList.remove('hidden');
         return;
       }
-      if (!confirm('Restore data from your Google Sheet? This will replace current data on this iPhone with your cloud backup.')) return;
 
-      showToast('Fetching backup from Google Sheet...');
+      btn.disabled = true;
+      btn.textContent = authMode === 'login' ? 'Signing In...' : 'Creating Account...';
+
       try {
-        const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'action=restore');
-        const json = await res.json();
-        if (json && json.data && json.data.riders && json.data.rides) {
-          const keptSettings = { ...state.settings, ...(json.data.settings || {}) };
-          state = { ...json.data, settings: keptSettings };
-          saveState(true);
-          showToast('Restored from Google Sheet!');
+        if (authMode === 'login') {
+          await window.auth.signInWithEmailAndPassword(email, password);
         } else {
-          alert('No valid backup found in your Google Sheet yet. Tap "Sync Now" first to create one.');
+          await window.auth.createUserWithEmailAndPassword(email, password);
         }
       } catch (err) {
-        alert('Could not read from Google Sheet. Make sure your Apps Script is deployed with access set to "Anyone".');
+        errEl.textContent = err.message || 'Authentication failed. Check your email and password.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = authMode === 'login' ? 'Sign In' : 'Create Cloud Account';
+      }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('authEmail').value.trim();
+      const errEl = document.getElementById('authErrorMsg');
+      if (!email) {
+        errEl.textContent = 'Enter your email address above first, then tap Forgot Password.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      try {
+        await window.auth.sendPasswordResetEmail(email);
+        showToast('Password reset email sent to ' + email);
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    async function handleSignOut() {
+      if (!confirm('Sign out of your cloud account on this device?')) return;
+      if (window.auth) {
+        await window.auth.signOut();
       }
     }
 
     /*****************************************************************
-     * 4. DATE, TIME & MESSAGE FORMATTING HELPERS
+     * 5. DATE, TIME & MESSAGE FORMATTING HELPERS
      *****************************************************************/
     function formatDateDisplay(dateStr) {
       if (!dateStr) return '';
@@ -424,7 +551,7 @@
     }
 
     /*****************************************************************
-     * 5. NAVIGATION & HEADER
+     * 6. NAVIGATION & HEADER
      *****************************************************************/
     function switchTab(tab) {
       currentTab = tab;
@@ -446,13 +573,6 @@
       const subEl = document.getElementById('headerSubtitle');
       const actionEl = document.getElementById('headerActionArea');
       const mainEl = document.getElementById('appMain');
-      const badge = document.getElementById('cloudStatusBadge');
-
-      if (state.settings.appsScriptUrl && state.settings.syncFrequency !== 'off') {
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
 
       if (currentTab === 'dashboard') {
         subEl.textContent = 'Analytics & Ledger';
@@ -470,7 +590,7 @@
         actionEl.innerHTML = `<button onclick="openFuelModal()" class="bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs">+ Log Fuel</button>`;
         mainEl.innerHTML = renderFuel();
       } else if (currentTab === 'setup') {
-        subEl.textContent = 'Master DB & Cloud Sync';
+        subEl.textContent = 'Master DB & Cloud Account';
         titleEl.textContent = 'Setup';
         actionEl.innerHTML = '';
         mainEl.innerHTML = renderSetup();
@@ -478,7 +598,7 @@
     }
 
     /*****************************************************************
-     * 6. DASHBOARD & DRILL-DOWN REPORTS
+     * 7. DASHBOARD & DRILL-DOWN REPORTS
      *****************************************************************/
     function setPeriod(p) {
       dashboardPeriod = p;
@@ -660,7 +780,6 @@
           ${periodPills}
         </div>
 
-        <!-- Net Recovery Hero Card -->
         <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-3xl p-4 shadow-sm space-y-3">
           <div class="flex justify-between items-start">
             <div>
@@ -670,7 +789,6 @@
             <span class="bg-white/10 text-gray-200 text-[11px] font-medium px-2.5 py-1 rounded-full">${filteredRides.length} Rides</span>
           </div>
 
-          <!-- Paid vs Due Progress Bar -->
           <div class="bg-white/5 rounded-2xl p-3 space-y-2">
             <div class="flex justify-between text-xs">
               <span class="text-emerald-400 font-bold">Paid: ${formatCurrency(totalCollected)} (${paidPct}%)</span>
@@ -686,7 +804,6 @@
           </div>
         </div>
 
-        <!-- Pending Dues -->
         <section class="space-y-2">
           <div class="flex items-center justify-between px-1">
             <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Pending Dues (${pendingItems.length})</h2>
@@ -694,7 +811,6 @@
           ${pendingHtml}
         </section>
 
-        <!-- Rider-Wise Drill-Down -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
           <div class="flex items-center justify-between mb-1">
             <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Rider-Wise Report</h2>
@@ -703,7 +819,6 @@
           ${riderReportHtml}
         </section>
 
-        <!-- Route-Wise Drill-Down -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
           <div class="flex items-center justify-between mb-1">
             <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Ride / Route-Wise Report</h2>
@@ -712,7 +827,6 @@
           ${routeReportHtml}
         </section>
 
-        <!-- Date-Wise Breakdown -->
         <section class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100">
           <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Date-Wise Ledger</h2>
           ${dateReportHtml}
@@ -893,7 +1007,7 @@
     }
 
     /*****************************************************************
-     * 7. RIDES TAB (SCHEDULE, EDIT ANY RIDE, ADMIN POST, UPDATES)
+     * 8. RIDES TAB (SCHEDULE, EDIT ANY RIDE, ADMIN POST, UPDATES)
      *****************************************************************/
     function setRidesFilter(f) {
       ridesFilter = f;
@@ -1106,7 +1220,7 @@
     }
 
     /*****************************************************************
-     * 8. WHATSAPP ADMIN SEAT POST, RIDE UPDATES & SINGLE-BUTTON QUEUE
+     * 9. WHATSAPP ADMIN SEAT POST, RIDE UPDATES & SINGLE-BUTTON QUEUE
      *****************************************************************/
     function openAdminPostModal(rideId) {
       const ride = state.rides.find(r => r.id === rideId);
@@ -1375,7 +1489,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 9. UNIFIED RIDE SCHEDULER / EDITOR (SUPPORTS 0 RIDERS, RETURN SWAP, PAST RIDES)
+     * 10. UNIFIED RIDE SCHEDULER / EDITOR
      *****************************************************************/
     function openModal(html) {
       document.getElementById('modalContent').innerHTML = html;
@@ -1671,7 +1785,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 10. END RIDE SETTLEMENT MODAL (WITH TOLL CHARGES & UNDO PAID)
+     * 11. END RIDE SETTLEMENT MODAL
      *****************************************************************/
     function openSettlementModal(rideId) {
       const ride = state.rides.find(r => r.id === rideId);
@@ -1769,7 +1883,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 11. FUEL & ODOMETER LOG TAB
+     * 12. FUEL & ODOMETER LOG TAB
      *****************************************************************/
     function renderFuel() {
       const sorted = [...state.fuelLogs].sort((a, b) => a.odometer - b.odometer);
@@ -1908,7 +2022,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
     }
 
     /*****************************************************************
-     * 12. SETUP TAB (RIDERS DB, ROUTES DB, PROFILE & TEMPLATES, CLOUD SYNC)
+     * 13. SETUP TAB (RIDERS DB, ROUTES DB, PROFILE & TEMPLATES, ACCOUNT)
      *****************************************************************/
     function setSetupSubTab(st) {
       setupSubTab = st;
@@ -1921,7 +2035,7 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
           <button onclick="setSetupSubTab('riders')" class="py-1.5 rounded-lg transition ${setupSubTab === 'riders' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Riders DB</button>
           <button onclick="setSetupSubTab('routes')" class="py-1.5 rounded-lg transition ${setupSubTab === 'routes' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Routes DB</button>
           <button onclick="setSetupSubTab('templates')" class="py-1.5 rounded-lg transition ${setupSubTab === 'templates' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Profile/Msg</button>
-          <button onclick="setSetupSubTab('cloud')" class="py-1.5 rounded-lg transition ${setupSubTab === 'cloud' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Cloud/Data</button>
+          <button onclick="setSetupSubTab('cloud')" class="py-1.5 rounded-lg transition ${setupSubTab === 'cloud' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'}">Account</button>
         </div>
       `;
 
@@ -2060,73 +2174,33 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
         `;
       }
 
-      const lastSyncText = state.settings.lastSyncedAt
-        ? new Date(state.settings.lastSyncedAt).toLocaleString('en-IN')
-        : 'Not synced yet';
+      const accountCard = currentUser
+        ? `
+          <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="text-emerald-600">${ICONS.cloud}</span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-700">Cloud Account Connected</h3>
+              </div>
+              <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Real-Time Sync</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-3 text-xs space-y-1">
+              <p class="text-gray-500">Signed in as:</p>
+              <p class="font-bold text-gray-900">${currentUser.email}</p>
+              <p class="text-[11px] text-gray-400 pt-1">Log in with this same email and password on any iPhone, Android, or laptop to access your data instantly.</p>
+            </div>
+            <button onclick="handleSignOut()" class="w-full bg-red-50 active:bg-red-100 text-red-600 border border-red-200 text-xs font-bold py-2.5 rounded-xl">
+              Sign Out of Cloud Account
+            </button>
+          </div>
+        `
+        : '';
 
       return `
         ${subNav}
-        <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <span class="text-blue-600">${ICONS.cloud}</span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-700">Google Sheet Cloud Backup</h3>
-            </div>
-            <button onclick="openAppsScriptGuideModal()" class="text-[11px] font-bold text-blue-600 underline">Setup Guide</button>
-          </div>
-
-          <p class="text-[11px] text-gray-500">Connect your private Google Sheet so your rides, payments, and fuel logs stay safe even if Safari is uninstalled.</p>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Your Gmail ID</label>
-            <input type="email" id="setCloudGmail" value="${state.settings.cloudGmail || ''}" placeholder="yourname@gmail.com" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Google Sheet Link (For Quick Viewing)</label>
-            <div class="flex gap-1.5">
-              <input type="url" id="setSheetUrl" value="${state.settings.googleSheetUrl || ''}" placeholder="https://docs.google.com/spreadsheets/d/..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
-              ${state.settings.googleSheetUrl ? `<a href="${state.settings.googleSheetUrl}" target="_blank" rel="noopener noreferrer" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl flex items-center">Open</a>` : ''}
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Google Apps Script Web App URL (Auto-Sync Engine)</label>
-            <input type="url" id="setScriptUrl" value="${state.settings.appsScriptUrl || ''}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Auto-Sync / Backup Frequency</label>
-            <select id="setSyncFreq" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold">
-              <option value="realtime" ${state.settings.syncFrequency === 'realtime' ? 'selected' : ''}>Real-Time (Auto-sync on every change)</option>
-              <option value="daily" ${state.settings.syncFrequency === 'daily' ? 'selected' : ''}>Daily Auto-Backup</option>
-              <option value="weekly" ${state.settings.syncFrequency === 'weekly' ? 'selected' : ''}>Weekly Auto-Backup</option>
-              <option value="off" ${state.settings.syncFrequency === 'off' ? 'selected' : ''}>Manual Only (Off)</option>
-            </select>
-          </div>
-
-          <button onclick="saveCloudSettings()" class="w-full bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-xs">
-            Save Cloud Settings
-          </button>
-
-          <div class="pt-2 border-t border-gray-100 space-y-2">
-            <div class="flex justify-between items-center text-[11px] text-gray-500">
-              <span>Last Cloud Backup:</span>
-              <span class="font-semibold text-gray-800">${lastSyncText}</span>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <button onclick="pushToGoogleSheet(false)" class="bg-emerald-600 active:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-xs">
-                Sync Now (Backup)
-              </button>
-              <button onclick="pullFromGoogleSheet()" class="bg-gray-100 active:bg-gray-200 text-gray-800 text-xs font-bold py-2.5 rounded-xl">
-                Restore from Cloud
-              </button>
-            </div>
-          </div>
-        </div>
-
+        ${accountCard}
         <div class="bg-white rounded-2xl p-4 shadow-xs border border-gray-100 space-y-2.5">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Local File Backup &amp; CSV Export</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Export &amp; Local Backup</h3>
           <div class="grid grid-cols-2 gap-2">
             <button onclick="downloadBackupJSON()" class="bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-xl">
               Download JSON
@@ -2144,54 +2218,6 @@ ${EMOJI.pray} Thank you! Have a safe ride! ${EMOJI.smile}`;
           </button>
         </div>
       `;
-    }
-
-    function openAppsScriptGuideModal() {
-      const scriptCode = `function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('CarpoolBackup') || ss.insertSheet('CarpoolBackup');
-  var payload = JSON.parse(e.postData.contents);
-  sheet.clear();
-  sheet.appendRow(['UpdatedAt', 'Gmail', 'RawJSON']);
-  sheet.appendRow([payload.updatedAt, payload.gmail, JSON.stringify(payload.data)]);
-  return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('CarpoolBackup');
-  if (!sheet || sheet.getLastRow() < 2) {
-    return ContentService.createTextOutput(JSON.stringify({status: 'empty'})).setMimeType(ContentService.MimeType.JSON);
-  }
-  var raw = sheet.getRange(2, 3).getValue();
-  return ContentService.createTextOutput(JSON.stringify({status: 'ok', data: JSON.parse(raw)})).setMimeType(ContentService.MimeType.JSON);
-}`;
-
-      openModal(`
-        <div class="space-y-3.5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-bold">Connect Google Sheet (1-Time Setup)</h3>
-            <button onclick="closeModal()" class="text-gray-400 p-1">${ICONS.close}</button>
-          </div>
-          <ol class="text-xs text-gray-600 space-y-1.5 list-decimal pl-4">
-            <li>Open a new Google Sheet in your Gmail account and copy its URL.</li>
-            <li>In the Sheet menu, tap <strong>Extensions &rarr; Apps Script</strong>.</li>
-            <li>Delete any code there, paste the script below, and tap <strong>Save</strong>.</li>
-            <li>Tap <strong>Deploy &rarr; New deployment &rarr; Web app</strong>. Set <em>Execute as: Me</em> and <em>Who has access: Anyone</em> &rarr; Deploy.</li>
-            <li>Copy the <strong>Web App URL</strong> (ends in <code>/exec</code>) and paste it into Carpool Pro!</li>
-          </ol>
-          <textarea id="appsScriptCodeBox" rows="8" readonly class="w-full bg-gray-900 text-emerald-300 font-mono text-[10px] p-2.5 rounded-xl">${scriptCode}</textarea>
-          <button onclick="copyAppsScriptCode()" class="w-full bg-blue-600 text-white text-xs font-bold py-2.5 rounded-xl">
-            Copy Apps Script Code
-          </button>
-        </div>
-      `);
-    }
-
-    function copyAppsScriptCode() {
-      const el = document.getElementById('appsScriptCodeBox');
-      el.select();
-      navigator.clipboard.writeText(el.value).then(() => showToast('Apps Script copied!'));
     }
 
     function openRiderFormModal(riderId = null) {
@@ -2382,15 +2408,6 @@ function doGet(e) {
       showToast('Profile & Templates saved!');
     }
 
-    function saveCloudSettings() {
-      state.settings.cloudGmail = document.getElementById('setCloudGmail').value.trim();
-      state.settings.googleSheetUrl = document.getElementById('setSheetUrl').value.trim();
-      state.settings.appsScriptUrl = document.getElementById('setScriptUrl').value.trim();
-      state.settings.syncFrequency = document.getElementById('setSyncFreq').value;
-      saveState(true);
-      showToast('Cloud backup settings saved!');
-    }
-
     function downloadBackupJSON() {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -2411,7 +2428,7 @@ function doGet(e) {
           if (imported.riders && imported.rides) {
             state = imported;
             saveState();
-            showToast('Backup restored successfully!');
+            showToast('Backup restored & synced!');
           } else {
             alert('Invalid backup file format.');
           }
@@ -2443,7 +2460,7 @@ function doGet(e) {
     }
 
     function resetAllData() {
-      if (!confirm('Clear all sample/existing rides, fuel logs, and riders so you can start with a blank slate?')) return;
+      if (!confirm('Clear all rides, fuel logs, and riders in your account so you can start with a blank slate?')) return;
       state = {
         riders: [],
         routes: [
@@ -2457,10 +2474,6 @@ function doGet(e) {
       saveState();
       showToast('All records cleared');
     }
-
-    // Initial Render & Periodic Auto-Sync Check
-    renderApp();
-    maybeAutoSyncCloud();
   </script>
 </body>
 </html>
